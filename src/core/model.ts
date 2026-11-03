@@ -4,8 +4,13 @@
 export interface Mesh {
   /** Node coordinates, interleaved [x0, y0, x1, y1, ...] in mm. */
   nodes: Float64Array;
-  /** Connectivity, 3 node indices per element, ordered counter-clockwise. */
+  /** Connectivity, 3 corner node indices per element, ordered counter-clockwise. */
   elements: Uint32Array;
+  /**
+   * Present for 6-node (LST) meshes: 3 mid-side node indices per element, on
+   * edges 1–2, 2–3 and 3–1. Absent for 3-node (CST) meshes.
+   */
+  midNodes?: Uint32Array;
 }
 
 export interface Material {
@@ -17,6 +22,9 @@ export interface Material {
   /** Yield strength, MPa. Used only for the factor of safety. */
   yieldStrength: number;
 }
+
+/** 1: 3-node constant strain triangles (CST). 2: 6-node linear strain triangles (LST). */
+export type ElementOrder = 1 | 2;
 
 export type Direction = 'x' | 'y';
 

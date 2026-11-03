@@ -9,7 +9,14 @@ import { pcg } from './linalg/pcg';
 import { csrMatVec, csrToDense } from './linalg/sparse';
 import { planeStressD } from './material';
 import type { Model, Solution } from './model';
-import { elementStresses, nodalAverage, sprNodalStress, vonMisesField } from './postprocess';
+import {
+  elementStresses,
+  nodalAverage,
+  nodalAverageLst,
+  sprNodalStress,
+  sprNodalStressLst,
+  vonMisesField,
+} from './postprocess';
 
 export interface SolveOptions {
   /** 'pcg' for real models; 'cholesky' (dense, O(n³)) as a reference on small ones. */
@@ -67,8 +74,9 @@ export function solve(model: Model, options: SolveOptions = {}): Solution {
 
   // 5. Stresses.
   const { stress, area } = elementStresses(mesh, D, u);
-  const nodalStress = nodalAverage(mesh, stress, area);
-  const sprStress = sprNodalStress(mesh, stress, area);
+  const quadratic = Boolean(mesh.midNodes);
+  const nodalStress = quadratic ? nodalAverageLst(mesh, D, u, area) : nodalAverage(mesh, stress, area);
+  const sprStress = quadratic ? sprNodalStressLst(mesh, D, u, nodalStress) : sprNodalStress(mesh, stress, area);
 
   return {
     displacements: u,

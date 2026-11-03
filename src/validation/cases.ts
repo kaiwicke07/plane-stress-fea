@@ -3,8 +3,9 @@
 
 import { tractionFieldLoads } from '../core/boundary';
 import { MATERIALS } from '../core/material';
-import type { Constraint, Model } from '../core/model';
+import type { Constraint, ElementOrder, Model } from '../core/model';
 import { solve } from '../core/solve';
+import { elevateToQuadratic } from '../mesh/quadratic';
 import { RECT_EDGE, type RectangleMeshOptions, rectangleMesh } from '../mesh/structured';
 import { edgesWithTag, nodesWithTag, type TaggedMesh } from '../mesh/tagged-mesh';
 import { type CantileverParams, cantileverEndTraction, cantileverExact, timoshenkoTip } from './analytical';
@@ -36,12 +37,15 @@ export function cantileverModel(
   ny: number,
   wall: WallCondition,
   pattern: MeshPattern = 'alternating',
+  order: ElementOrder = 1,
 ): { model: Model; mesh: TaggedMesh; nx: number; tipNode: number } {
   if (!(Number.isInteger(ny) && ny >= 2 && ny % 2 === 0)) throw new RangeError(`ny must be an even integer ≥ 2, got ${ny}`);
   const { length, depth, thickness, material } = params;
   // Square cells; nx is kept even so a node sits at midspan.
   const nx = 2 * Math.max(1, Math.round((ny * length) / depth / 2));
-  const mesh = rectangleMesh({ x0: 0, y0: -depth / 2, width: length, height: depth, nx, ny, pattern });
+  const linear = rectangleMesh({ x0: 0, y0: -depth / 2, width: length, height: depth, nx, ny, pattern });
+  // Corner node numbering is unchanged by elevation, so tipNode below holds for both orders.
+  const mesh = order === 2 ? elevateToQuadratic(linear) : linear;
 
   const exact = cantileverExact(params);
   const constraints: Constraint[] = nodesWithTag(mesh, RECT_EDGE.left).flatMap((node) => {
@@ -71,6 +75,7 @@ export function cantileverModel(
 export interface CantileverRun {
   nx: number;
   ny: number;
+  order: ElementOrder;
   dofs: number;
   /** Element size (cell edge length), mm. */
   h: number;
@@ -103,14 +108,15 @@ export interface ClampedWallRun extends CantileverRun {
   ratioToTimoshenko: number;
 }
 
-function run(params: CantileverParams, ny: number, wall: WallCondition, pattern: MeshPattern) {
-  const { model, mesh, nx, tipNode } = cantileverModel(params, ny, wall, pattern);
+function run(params: CantileverParams, ny: number, wall: WallCondition, pattern: MeshPattern, order: ElementOrder) {
+  const { model, mesh, nx, tipNode } = cantileverModel(params, ny, wall, pattern, order);
   const solution = solve(model);
   const { length: L, depth, thickness, load: P } = params;
   const midspanTopNode = ny * (nx + 1) + nx / 2;
   const base: CantileverRun = {
     nx,
     ny,
+    order,
     dofs: mesh.nodes.length,
     h: depth / ny,
     tipDeflection: -solution.displacements[2 * tipNode + 1],
@@ -122,8 +128,13 @@ function run(params: CantileverParams, ny: number, wall: WallCondition, pattern:
   return { base, mesh, solution };
 }
 
-export function runExactWall(params: CantileverParams, ny: number, pattern: MeshPattern = 'alternating'): ExactWallRun {
-  const { base, mesh, solution } = run(params, ny, 'exact', pattern);
+export function runExactWall(
+  params: CantileverParams,
+  ny: number,
+  pattern: MeshPattern = 'alternating',
+  order: ElementOrder = 1,
+): ExactWallRun {
+  const { base, mesh, solution } = run(params, ny, 'exact', pattern, order);
   const exact = cantileverExact(params);
   const exactTipDeflection = -exact.displacement(params.length, 0)[1];
   return {
@@ -138,8 +149,9 @@ export function runClampedWall(
   params: CantileverParams,
   ny: number,
   pattern: MeshPattern = 'alternating',
+  order: ElementOrder = 1,
 ): ClampedWallRun {
-  const { base } = run(params, ny, 'clamped', pattern);
+  const { base } = run(params, ny, 'clamped', pattern, order);
   const timoshenkoTipDeflection = timoshenkoTip(params);
   return { ...base, timoshenkoTipDeflection, ratioToTimoshenko: base.tipDeflection / timoshenkoTipDeflection };
 }
@@ -154,8 +166,8 @@ export interface ProfilePoint {
 }
 
 /** σx through the depth at midspan (x = L/2) on the clamped model, against σ = M·y/I. */
-export function midspanProfile(params: CantileverParams, ny: number): ProfilePoint[] {
-  const { solution, mesh } = run(params, ny, 'clamped', 'alternating');
+export function midspanProfile(params: CantileverParams, ny: number, order: ElementOrder = 1): ProfilePoint[] {
+  const { solution, mesh } = run(params, ny, 'clamped', 'alternating', order);
   const exact = cantileverExact(params);
   const points: ProfilePoint[] = [];
   for (let n = 0; n < mesh.nodes.length / 2; n++) {
@@ -182,8 +194,9 @@ export function cantileverConvergence(
   params: CantileverParams = DEFAULT_CANTILEVER,
   levels: readonly number[] = [2, 4, 8, 16],
   pattern: MeshPattern = 'alternating',
+  order: ElementOrder = 1,
 ): ConvergenceStudy {
-  const runs = levels.map((ny) => runExactWall(params, ny, pattern));
+  const runs = levels.map((ny) => runExactWall(params, ny, pattern, order));
   const h = runs.map((r) => r.h);
   return {
     runs,

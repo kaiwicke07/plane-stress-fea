@@ -2,10 +2,11 @@
 // symmetry rollers. Used by the test suite and the site's validation page.
 
 import { MATERIALS } from '../core/material';
-import type { Material, Solution } from '../core/model';
+import type { ElementOrder, Material, Solution } from '../core/model';
 import { solve } from '../core/solve';
 import { distmesh } from '../mesh/distmesh';
-import { distanceToHoles, type Region } from '../mesh/geometry';
+import { distanceToHoles, type Region, regionCurves } from '../mesh/geometry';
+import { elevateToQuadratic } from '../mesh/quadratic';
 import { meshQuality } from '../mesh/quality';
 import type { TaggedMesh } from '../mesh/tagged-mesh';
 import { buildModel, type StudySetup } from '../model/spec';
@@ -71,15 +72,22 @@ export function plateRegion({ width, length, holeDiameter }: PlateParams): Regio
 }
 
 /** Mesh, symmetry rollers and the far-field traction for the quarter model. */
-export function plateSetup(params: PlateParams, mesh: PlateMeshOptions): StudySetup & { converged: boolean } {
+export function plateSetup(
+  params: PlateParams,
+  mesh: PlateMeshOptions,
+  order: ElementOrder = 1,
+): StudySetup & { converged: boolean } {
   const region = plateRegion(params);
   const { hHole, hMax, grading } = mesh;
+  const curves = regionCurves(region);
   const result = distmesh(region, {
     hMin: hHole,
     size: (x, y) => Math.min(hMax, hHole + grading * distanceToHoles(region, x, y)),
   });
   return {
-    mesh: result.mesh,
+    // 6-node meshes put mid-side nodes on the true hole arc.
+    mesh: order === 2 ? elevateToQuadratic(result.mesh, curves) : result.mesh,
+    curves,
     converged: result.converged,
     supports: [
       { edge: PLATE_EDGE.left, kind: 'roller-x' }, // symmetry about x = 0
@@ -124,8 +132,8 @@ export interface PlateRun {
   ligament: { y: number; average: number; spr: number; kirsch: number }[];
 }
 
-export function runPlate(params: PlateParams, meshOptions: PlateMeshOptions): PlateRun {
-  const setup = plateSetup(params, meshOptions);
+export function runPlate(params: PlateParams, meshOptions: PlateMeshOptions, order: ElementOrder = 1): PlateRun {
+  const setup = plateSetup(params, meshOptions, order);
   const model = buildModel(setup, params.material, params.thickness);
   const solution = solve(model);
   const { mesh } = setup;

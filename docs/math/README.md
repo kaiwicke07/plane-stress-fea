@@ -13,6 +13,7 @@ and likely interview questions.
 7. [Reading the results](07-visualisation.md): deformation scale, nodal vs element plots, colour, singular peaks
 8. [Meshing, stress recovery and the plate with a hole](08-meshing.md): Delaunay, DistMesh, SPR, K_t by basis
 9. [The geometry editor](09-geometry-editor.md): orientation tests, polygon validity, stable edge IDs, undo
+10. [The 6-node LST element](10-lst-element.md): isoparametric mapping, Gauss quadrature, curved edges, CST vs LST
 
 The whole pipeline in one line:
 

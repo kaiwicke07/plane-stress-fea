@@ -3,6 +3,7 @@ import { DIVERGING_STOPS, HEAT_STOPS } from '../render/colormap';
 import { FieldRenderer } from '../render/field-renderer';
 import { elementValues, type FieldId, fieldById, fieldRange, nodalValues, type StressDisplay } from '../render/fields';
 import { drawOverlay, type OverlayColors } from '../render/overlay';
+import { linearDisplayMesh } from '../mesh/quadratic';
 import { deformedPositions, locate } from '../render/probe';
 import { type Bounds, boundsOf, fitView, panBy, screenToWorld, type View, zoomAt } from '../render/view';
 import type { SolveResult } from '../worker/job';
@@ -60,6 +61,8 @@ export function Viewport({ result, display, deformationScale, busy, error }: Vie
   const field = fieldById(display.field);
   const stops = field.diverging ? DIVERGING_STOPS : HEAT_STOPS;
   const bounds = useMemo(() => (result ? boundsOf(result.mesh.nodes) : null), [result]);
+  // 6-node elements are drawn as four linear triangles each; `parent` maps back.
+  const shown = useMemo(() => (result ? linearDisplayMesh(result.mesh) : null), [result]);
 
   // Fit the camera when the part's extent changes (not when it is only re-meshed).
   // Adjusting state during render avoids an extra effect pass.
@@ -102,17 +105,20 @@ export function Viewport({ result, display, deformationScale, busy, error }: Vie
   }, []);
 
   useEffect(() => {
-    if (result) rendererRef.current?.setMesh(result.mesh, result.solution.displacements);
-  }, [result]);
+    if (result && shown) rendererRef.current?.setMesh(shown.mesh, result.solution.displacements, shown.lines);
+  }, [result, shown]);
 
   const { values, range } = useMemo(() => {
-    if (!result) return { values: new Float64Array(), range: [0, 1] as [number, number] };
-    const vals =
-      display.stress === 'element'
-        ? elementValues(display.field, result.solution, result.mesh)
-        : nodalValues(display.field, result.solution, display.stress);
-    return { values: vals, range: fieldRange(vals, field.diverging) };
-  }, [result, display.field, display.stress, field.diverging]);
+    if (!result || !shown) return { values: new Float64Array(), range: [0, 1] as [number, number] };
+    if (display.stress !== 'element') {
+      const vals = nodalValues(display.field, result.solution, display.stress);
+      return { values: vals, range: fieldRange(vals, field.diverging) };
+    }
+    // One value per drawn triangle: its parent element's.
+    const perParent = elementValues(display.field, result.solution, result.mesh);
+    const vals = Float64Array.from(shown.parent, (e) => perParent[e]);
+    return { values: vals, range: fieldRange(perParent, field.diverging) };
+  }, [result, shown, display.field, display.stress, field.diverging]);
   const perElement = display.stress === 'element';
 
   useEffect(() => {
@@ -148,7 +154,7 @@ export function Viewport({ result, display, deformationScale, busy, error }: Vie
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       drawOverlay(ctx, {
         view: frameView,
-        mesh: result.mesh,
+        mesh: shown!.mesh,
         deformed,
         showUndeformed: display.showUndeformed,
         supports: result.supports,
@@ -158,7 +164,7 @@ export function Viewport({ result, display, deformationScale, busy, error }: Vie
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [cx, cy, zoom, width, height, dpr, result, deformed, deformationScale, range, values, display, probe]);
+  }, [cx, cy, zoom, width, height, dpr, result, shown, deformed, deformationScale, range, values, display, probe]);
 
   // Wheel zoom needs a non-passive listener to stop the page scrolling.
   useEffect(() => {
@@ -181,12 +187,13 @@ export function Viewport({ result, display, deformationScale, busy, error }: Vie
   const updateProbe = (sx: number, sy: number) => {
     if (!view || !result || !deformed) return;
     const world = screenToWorld(view, sx, sy);
-    const hit = locate(deformed, result.mesh.elements, world[0], world[1]);
+    if (!shown) return;
+    const hit = locate(deformed, shown.mesh.elements, world[0], world[1]);
     if (!hit) {
       setProbe(null);
       return;
     }
-    const nodes = [0, 1, 2].map((k) => result.mesh.elements[3 * hit.element + k]);
+    const nodes = [0, 1, 2].map((k) => shown.mesh.elements[3 * hit.element + k]);
     const u = result.solution.displacements;
     const interp = (f: (n: number) => number) => hit.weights.reduce((s, w, k) => s + w * f(nodes[k]), 0);
     setProbe({

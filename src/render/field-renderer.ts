@@ -118,8 +118,12 @@ export class FieldRenderer {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, colormapTexels(stops));
   }
 
-  /** Uploads geometry: each triangle gets its own 3 vertices so values can be flat per element. */
-  setMesh(mesh: Mesh, displacements: Float64Array): void {
+  /**
+   * Uploads geometry: each triangle gets its own 3 vertices so values can be
+   * flat per element. Mesh lines default to the triangles' edges; `lines`
+   * (node pairs) overrides them, e.g. to hide the split of 6-node elements.
+   */
+  setMesh(mesh: Mesh, displacements: Float64Array, lines?: Uint32Array): void {
     const { gl } = this;
     const { nodes, elements } = mesh;
     this.elements = elements;
@@ -145,24 +149,32 @@ export class FieldRenderer {
     const linePositions: number[] = [];
     const lineDisp: number[] = [];
     let totalLength = 0;
-    for (let e = 0; e < elements.length; e += 3) {
-      for (let k = 0; k < 3; k++) {
-        const a = elements[e + k];
-        const b = elements[e + ((k + 1) % 3)];
-        const key = Math.min(a, b) * nNodes + Math.max(a, b);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        totalLength += Math.hypot(nodes[2 * b] - nodes[2 * a], nodes[2 * b + 1] - nodes[2 * a + 1]);
-        for (const n of [a, b]) {
-          linePositions.push(nodes[2 * n], nodes[2 * n + 1]);
-          lineDisp.push(displacements[2 * n], displacements[2 * n + 1]);
+    // Spreading a large typed array into push() can overflow the call stack, so copy it.
+    const pairs: number[] = lines ? Array.from(lines) : [];
+    if (!lines) {
+      for (let e = 0; e < elements.length; e += 3) {
+        for (let k = 0; k < 3; k++) {
+          const a = elements[e + k];
+          const b = elements[e + ((k + 1) % 3)];
+          const key = Math.min(a, b) * nNodes + Math.max(a, b);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          pairs.push(a, b);
         }
+      }
+    }
+    for (let p = 0; p < pairs.length; p += 2) {
+      const [a, b] = [pairs[p], pairs[p + 1]];
+      totalLength += Math.hypot(nodes[2 * b] - nodes[2 * a], nodes[2 * b + 1] - nodes[2 * a + 1]);
+      for (const n of [a, b]) {
+        linePositions.push(nodes[2 * n], nodes[2 * n + 1]);
+        lineDisp.push(displacements[2 * n], displacements[2 * n + 1]);
       }
     }
     this.upload(this.buffers.linePosition, Float32Array.from(linePositions), gl.STATIC_DRAW);
     this.upload(this.buffers.lineDisplacement, Float32Array.from(lineDisp), gl.STATIC_DRAW);
     this.lineVertexCount = linePositions.length / 2;
-    this.edgeLength = seen.size > 0 ? totalLength / seen.size : 0;
+    this.edgeLength = pairs.length > 0 ? totalLength / (pairs.length / 2) : 0;
   }
 
   /** Values per node (smoothed) or per element (raw), matching the last setMesh. */

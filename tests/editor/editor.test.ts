@@ -166,6 +166,7 @@ describe('geometry to study', () => {
         id: 1,
         source: { kind: 'custom', geometry: t.build() },
         density: 4,
+        elementOrder: 1,
         material: MATERIALS[0],
         thickness: 5,
       });
@@ -178,6 +179,7 @@ describe('geometry to study', () => {
       id: 1,
       source: { kind: 'custom', geometry: templateById('bracket').build() },
       density: 6,
+      elementOrder: 1,
       material: MATERIALS[0],
       thickness: 5,
     });

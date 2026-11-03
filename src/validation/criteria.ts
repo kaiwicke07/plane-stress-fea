@@ -102,3 +102,46 @@ export function ligamentCheck(run: PlateRun, a: number): Check {
     pass: near.length > 5 && worst < 0.025,
   };
 }
+
+/**
+ * 6-node LST on the exact-wall cantilever: theory gives O(h²) energy and O(h³)
+ * L2 error, and it should beat CST by a wide margin at a fraction of the DOFs.
+ * The tip error is not checked for an order: it reaches the PCG tolerance (~1e-8)
+ * on fine meshes, which hides the discretisation error.
+ */
+export function lstCantileverChecks(lst: ConvergenceStudy, cst: ConvergenceStudy): Check[] {
+  const coarsest = lst.runs[0];
+  const finestCst = last(cst.runs);
+  return [
+    {
+      label: 'LST energy-norm convergence order (theory 2)',
+      measured: last(lst.rates.energy).toFixed(2),
+      required: '1.9 to 2.1',
+      pass: within(last(lst.rates.energy), 1.9, 2.1),
+    },
+    {
+      label: 'LST L2 displacement convergence order (theory 3)',
+      measured: last(lst.rates.displacementL2).toFixed(2),
+      required: '2.8 to 3.4',
+      pass: within(last(lst.rates.displacementL2), 2.8, 3.4),
+    },
+    {
+      label: `LST tip error with ${coarsest.ny} cells (${coarsest.dofs} DOFs) below CST with ${finestCst.ny} cells (${finestCst.dofs.toLocaleString('en-US')} DOFs)`,
+      measured: `${pct(coarsest.tipError, 3)} vs ${pct(finestCst.tipError, 3)}`,
+      required: 'LST smaller',
+      pass: coarsest.tipError < finestCst.tipError,
+    },
+  ];
+}
+
+/** LST plate with curved hole edges: K_t,g against Heywood (converted to gross). */
+export function lstPlateCheck(run: PlateRun, elementsPerRadius: number): Check {
+  const kt = run.kt['spr-arc-fit'].gross;
+  const ref = convertKt(heywoodKt(run.dOverW), 'gross', run.dOverW);
+  return {
+    label: `LST ${ktLabel('gross')} vs Heywood (converted to gross), ${elementsPerRadius} elements per radius`,
+    measured: pct(kt.value / ref.value - 1),
+    required: 'within ±1%',
+    pass: Math.abs(kt.value / ref.value - 1) < 0.01,
+  };
+}

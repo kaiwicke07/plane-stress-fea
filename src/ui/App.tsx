@@ -23,6 +23,7 @@ const INITIAL_INPUTS: ModelInputs = {
   presetId: PRESETS[0].id,
   values: Object.fromEntries(PRESETS.map((p) => [p.id, defaultValues(p)])),
   density: 8,
+  elementOrder: 1,
   materialIndex: 0,
   thickness: 5,
 };
@@ -65,6 +66,7 @@ export function App() {
   const job = useMemo<JobInput | null>(() => {
     const common = {
       density: inputs.density,
+      elementOrder: inputs.elementOrder,
       material: MATERIALS[inputs.materialIndex],
       thickness: inputs.thickness,
     };

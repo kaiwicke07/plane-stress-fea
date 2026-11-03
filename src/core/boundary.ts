@@ -6,12 +6,14 @@ import { choleskySolve } from './linalg/dense';
 import { NotPositiveDefiniteError } from './linalg/errors';
 import type { CsrMatrix } from './linalg/sparse';
 import { type Constraint, dofIndex, type EdgeTraction, type Mesh, type PointLoad } from './model';
-import { GAUSS_LINE_2 } from './quadrature';
+import { GAUSS_LINE_2, GAUSS_LINE_3 } from './quadrature';
+import { edgeMidNode } from './topology';
 
 /**
- * Adds consistent nodal forces for uniform edge tractions to F. For a linear
+ * Adds consistent nodal forces for uniform edge tractions to F. For a 2-node
  * edge and constant traction, f = ∫ Nᵀ·t̄ · t ds puts half of the edge's total
- * force on each end node.
+ * force on each end node. A 3-node (LST) edge is integrated with its quadratic
+ * shape functions: 1/6, 4/6, 1/6 on a straight edge.
  */
 export function addTractionLoads(
   mesh: Mesh,
@@ -25,6 +27,14 @@ export function addTractionLoads(
 
   for (const { nodes: [a, b], tx, ty } of tractions) {
     if (!edges.has(edgeKey(a, b))) throw new Error(`Traction edge (${a}, ${b}) is not an element edge`);
+    const m = edgeMidNode(mesh, a, b);
+    if (m !== undefined) {
+      quadraticEdgeForces(mesh, a, m, b, () => [tx, ty], thickness, (node, fx, fy) => {
+        F[2 * node] += fx;
+        F[2 * node + 1] += fy;
+      });
+      continue;
+    }
     const length = Math.hypot(nodes[2 * b] - nodes[2 * a], nodes[2 * b + 1] - nodes[2 * a + 1]);
     const half = (length * thickness) / 2;
     F[2 * a] += tx * half;
@@ -36,8 +46,9 @@ export function addTractionLoads(
 
 /**
  * Consistent nodal forces f = ∫ Nᵀ·t̄(x, y) · t ds for a traction that varies
- * along the edges, integrated with 2-point Gauss quadrature. This is exact when
- * the traction is at most quadratic along each edge.
+ * along the edges. 2-node edges use 2-point Gauss quadrature and 3-node (LST)
+ * edges 3-point; both are exact for a traction up to quadratic along a
+ * straight edge.
  *
  * Returns point loads because a Model must be serialisable (it is sent to a Web
  * Worker), so it cannot carry the traction function itself.
@@ -58,6 +69,11 @@ export function tractionFieldLoads(
   };
 
   for (const [a, b] of edges) {
+    const m = edgeMidNode(mesh, a, b);
+    if (m !== undefined) {
+      quadraticEdgeForces(mesh, a, m, b, traction, thickness, add);
+      continue;
+    }
     const [xa, ya, xb, yb] = [nodes[2 * a], nodes[2 * a + 1], nodes[2 * b], nodes[2 * b + 1]];
     const jacobian = Math.hypot(xb - xa, yb - ya) / 2; // ds = (L/2) dξ
     for (let q = 0; q < GAUSS_LINE_2.points.length; q++) {
@@ -71,6 +87,39 @@ export function tractionFieldLoads(
     }
   }
   return [...forces].map(([node, [fx, fy]]) => ({ node, fx, fy }));
+}
+
+/**
+ * ∫ Nᵀ·t̄ · t ds over a 3-node edge a–m–b, mapped isoparametrically from
+ * ξ ∈ [−1, 1] (so a curved edge is integrated along the curve):
+ * N_a = ξ(ξ − 1)/2, N_m = 1 − ξ², N_b = ξ(ξ + 1)/2.
+ */
+function quadraticEdgeForces(
+  mesh: Mesh,
+  a: number,
+  m: number,
+  b: number,
+  traction: (x: number, y: number) => readonly [number, number],
+  thickness: number,
+  add: (node: number, fx: number, fy: number) => void,
+): void {
+  const { nodes } = mesh;
+  const ids = [a, m, b];
+  for (let q = 0; q < GAUSS_LINE_3.points.length; q++) {
+    const xi = GAUSS_LINE_3.points[q];
+    const N = [(xi * (xi - 1)) / 2, 1 - xi * xi, (xi * (xi + 1)) / 2];
+    const dN = [xi - 0.5, -2 * xi, xi + 0.5];
+    let [x, y, dx, dy] = [0, 0, 0, 0];
+    ids.forEach((n, k) => {
+      x += N[k] * nodes[2 * n];
+      y += N[k] * nodes[2 * n + 1];
+      dx += dN[k] * nodes[2 * n];
+      dy += dN[k] * nodes[2 * n + 1];
+    });
+    const [tx, ty] = traction(x, y);
+    const w = GAUSS_LINE_3.weights[q] * Math.hypot(dx, dy) * thickness; // ds = |dx/dξ| dξ
+    ids.forEach((n, k) => add(n, w * N[k] * tx, w * N[k] * ty));
+  }
 }
 
 export interface DofPartition {

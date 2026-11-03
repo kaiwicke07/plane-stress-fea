@@ -6,6 +6,12 @@ export const GAUSS_LINE_2 = {
   weights: [1, 1],
 } as const;
 
+/** 3-point Gauss–Legendre rule on [−1, 1]. Exact for polynomials up to degree 5. */
+export const GAUSS_LINE_3 = {
+  points: [-Math.sqrt(3 / 5), 0, Math.sqrt(3 / 5)],
+  weights: [5 / 9, 8 / 9, 5 / 9],
+} as const;
+
 /**
  * 6-point rule on a triangle, exact for polynomials up to degree 4 (Dunavant).
  * Points are barycentric coordinates (L1, L2, L3); weights sum to 1, so

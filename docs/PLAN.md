@@ -15,7 +15,7 @@ with a thickness `t` in mm.
 | 4 | Bowyer–Watson Delaunay + DistMesh, quality metrics, plate-with-hole validation | Kt matches references (see below) |
 | 5 | Geometry editor: polygons, holes, edge picking, supports and tractions | User-drawn part solves end to end (done: outline, circle and polygon holes, stable edge IDs, undo, autosave, three templates) |
 | 6 | Validation page: FEA vs analytical plots, error tables, convergence plots | Same cases run in Vitest and on the site (done: `#/validation` runs `src/validation/suite.ts` live in a worker; pass/fail from shared `criteria.ts`) |
-| 7 | 6-node quadratic triangle (LST), CST vs LST comparison, README and polish | LST cantilever matches beam theory on a coarse mesh |
+| 7 | 6-node quadratic triangle (LST), CST vs LST comparison, README and polish | LST cantilever matches beam theory on a coarse mesh (done: 0.9945 of Timoshenko at 2 cells; isoparametric with curved hole edges; [note 10](math/10-lst-element.md)) |
 
 ## Modelling rules
 

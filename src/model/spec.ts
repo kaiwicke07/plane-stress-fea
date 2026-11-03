@@ -4,6 +4,7 @@
 
 import { tractionFieldLoads } from '../core/boundary';
 import type { Constraint, EdgeTraction, Material, Model } from '../core/model';
+import type { Curve } from '../mesh/geometry';
 import { edgesWithTag, nodesWithTag, type TaggedMesh } from '../mesh/tagged-mesh';
 
 /** Which displacement components a support fixes. */
@@ -33,6 +34,11 @@ export interface StudySetup {
   mesh: TaggedMesh;
   supports: EdgeSupport[];
   loads: EdgeLoad[];
+  /**
+   * Geometry curve of each boundary tag, so a 6-node mesh can place mid-side
+   * nodes on curved edges. Plain data, so it can cross to a worker.
+   */
+  curves?: Curve[];
 }
 
 export function buildModel(setup: StudySetup, material: Material, thickness: number): Model {

@@ -2,11 +2,12 @@
 // without a Worker.
 
 import { assembleLoads } from '../core/assembly';
-import type { Material, Solution } from '../core/model';
+import type { ElementOrder, Material, Solution } from '../core/model';
 import { solve } from '../core/solve';
 import type { TaggedMesh } from '../mesh/tagged-mesh';
 import type { EditorGeometry } from '../editor/model';
 import { buildStudy } from '../editor/study';
+import { elevateToQuadratic } from '../mesh/quadratic';
 import { buildModel, type EdgeLoad, type EdgeSupport, type StudySetup } from '../model/spec';
 import { presetById } from '../presets';
 
@@ -19,6 +20,8 @@ export interface SolveJob {
   id: number;
   source: JobSource;
   density: number;
+  /** 1: 3-node CST, 2: 6-node LST. */
+  elementOrder: ElementOrder;
   material: Material;
   thickness: number;
 }
@@ -46,7 +49,10 @@ export type WorkerResponse = { type: 'result'; result: SolveResult } | { type: '
 
 export function runJob(job: SolveJob): SolveResult {
   const t0 = performance.now();
-  const setup = setupFor(job);
+  const linear = setupFor(job);
+  // 6-node elements: add mid-side nodes, on the true curve where the setup knows it.
+  const setup =
+    job.elementOrder === 2 ? { ...linear, mesh: elevateToQuadratic(linear.mesh, linear.curves) } : linear;
   const t1 = performance.now();
 
   const model = buildModel(setup, job.material, job.thickness);
@@ -78,6 +84,7 @@ export function transferables({ mesh, solution }: SolveResult): ArrayBuffer[] {
     mesh.elements,
     mesh.boundaryEdges,
     mesh.boundaryTags,
+    ...(mesh.midNodes ? [mesh.midNodes] : []),
     solution.displacements,
     solution.reactions,
     solution.elementStress,

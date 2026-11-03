@@ -2,7 +2,7 @@
 // and supports/loads mapped from stable edge IDs to mesh boundary tags.
 
 import { distmesh } from '../mesh/distmesh';
-import { distanceToHoles, type Region } from '../mesh/geometry';
+import { distanceToHoles, type Region, regionCurves } from '../mesh/geometry';
 import { edgesWithTag } from '../mesh/tagged-mesh';
 import type { EdgeLoad, EdgeSupport, StudySetup } from '../model/spec';
 import { allEdges, type EdgeId, type EditorGeometry, signedArea2 } from './model';
@@ -75,5 +75,5 @@ export function buildStudy(geo: EditorGeometry, density: number): StudySetup {
     if (condition.support) supports.push({ edge: tag, kind: condition.support });
     if (condition.load) loads.push({ edge: tag, ...condition.load });
   });
-  return { mesh, supports, loads };
+  return { mesh, supports, loads, curves: regionCurves(region) };
 }

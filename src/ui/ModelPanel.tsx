@@ -1,5 +1,6 @@
 import { type ReactNode, useId } from 'react';
 import { MATERIALS } from '../core/material';
+import type { ElementOrder } from '../core/model';
 import { CUSTOM_PART, PRESETS, presetById } from '../presets';
 import { NumberField } from './NumberField';
 
@@ -8,6 +9,7 @@ export interface ModelInputs {
   /** Parameter values per preset, so switching presets keeps edits. */
   values: Record<string, Record<string, number>>;
   density: number;
+  elementOrder: ElementOrder;
   materialIndex: number;
   thickness: number;
 }
@@ -25,7 +27,7 @@ const CUSTOM_DENSITY_NOTE =
 const DENSITY_RANGE = { min: 2, max: 40 } as const;
 
 export function ModelPanel({ inputs, onChange, customPanel }: ModelPanelProps) {
-  const ids = { preset: useId(), density: useId(), material: useId() };
+  const ids = { preset: useId(), density: useId(), material: useId(), order: useId() };
   const custom = inputs.presetId === CUSTOM_PART;
   const preset = custom ? null : presetById(inputs.presetId);
   const values = preset ? inputs.values[preset.id] : {};
@@ -86,6 +88,24 @@ export function ModelPanel({ inputs, onChange, customPanel }: ModelPanelProps) {
         />
         <p id={`${ids.density}-note`} className="muted field-note">
           {preset ? preset.densityNote : CUSTOM_DENSITY_NOTE}
+        </p>
+      </div>
+
+      <div className="field">
+        <label htmlFor={ids.order}>Element type</label>
+        <select
+          id={ids.order}
+          value={inputs.elementOrder}
+          aria-describedby={`${ids.order}-note`}
+          onChange={(e) => onChange({ ...inputs, elementOrder: Number(e.target.value) as ElementOrder })}
+        >
+          <option value={1}>Linear triangle (CST, 3-node)</option>
+          <option value={2}>Quadratic triangle (LST, 6-node)</option>
+        </select>
+        <p id={`${ids.order}-note`} className="muted field-note">
+          {inputs.elementOrder === 2
+            ? 'Quadratic displacement, linear stress: far more accurate per DOF, especially in bending. Hole edges are curved.'
+            : 'Constant stress per element: simple, but stiff in bending. Needs fine meshes.'}
         </p>
       </div>
 

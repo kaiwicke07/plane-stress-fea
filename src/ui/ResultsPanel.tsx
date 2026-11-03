@@ -62,7 +62,9 @@ export function ResultsPanel({ result, summary, deformationScale }: ResultsPanel
       <h3>Solver</h3>
       <dl className="stats">
         <dt>Elements</dt>
-        <dd>{summary.elements.toLocaleString()}</dd>
+        <dd>
+          {summary.elements.toLocaleString()} {result.mesh.midNodes ? 'LST' : 'CST'}
+        </dd>
         <dt>Degrees of freedom</dt>
         <dd>{summary.dofs.toLocaleString()}</dd>
         <dt>PCG iterations</dt>

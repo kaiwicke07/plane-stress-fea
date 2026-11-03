@@ -2,14 +2,15 @@ import type { ReactNode } from 'react';
 import { SUITE_LABEL, SUITE_ORDER, type SuiteKey } from '../../validation/suite';
 import { SiteHeader } from '../SiteHeader';
 import { CantileverIntro, ClampedCantilever, ExactCantilever, MidspanProfile } from './CantileverSections';
+import { LstCantilever, LstPlate } from './LstSections';
 import { HeywoodPlates, KirschPlate, StressDefinitions } from './PlateSections';
 import { type StudyStatus, useValidation } from './useValidation';
 
 export function ValidationPage() {
   const { results, status, finished, rerun } = useValidation();
 
-  const section = (key: SuiteKey, render: () => ReactNode) =>
-    results[key] ? render() : <StudyPlaceholder status={status[key]} />;
+  const section = (key: SuiteKey, render: () => ReactNode, needs: SuiteKey[] = []) =>
+    results[key] && needs.every((k) => results[k]) ? render() : <StudyPlaceholder status={status[key]} />;
 
   return (
     <div className="page">
@@ -21,7 +22,7 @@ export function ValidationPage() {
           <p>
             Every number on this page is computed <strong>live in your browser</strong>, by the same functions the test
             suite runs in CI, and checked against the same tolerances. The derivations are in <code>docs/math/</code>{' '}
-            in the repository (notes 6 and 8).
+            in the repository (notes 6, 8 and 10).
           </p>
           <ul className="progress" aria-label="Studies">
             {SUITE_ORDER.map((key) => (
@@ -74,6 +75,28 @@ export function ValidationPage() {
           {section('plateHeywood', () => (
             <HeywoodPlates runs={results.plateHeywood!} />
           ))}
+        </section>
+
+        <section className="study">
+          <h2>6-node elements: cantilever</h2>
+          {section(
+            'cantileverLst',
+            () => (
+              <LstCantilever lst={results.cantileverLst!} cst={results.cantileverExact!} />
+            ),
+            ['cantileverExact'],
+          )}
+        </section>
+
+        <section className="study">
+          <h2>6-node elements: plate with a hole</h2>
+          {section(
+            'plateLst',
+            () => (
+              <LstPlate lst={results.plateLst!} cst={results.plateKirsch!} />
+            ),
+            ['plateKirsch'],
+          )}
         </section>
       </div>
     </div>
