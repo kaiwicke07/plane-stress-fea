@@ -39,8 +39,9 @@ export interface EdgeTraction {
 }
 
 /**
- * Concentrated nodal force in N. Used by tests and internally; the UI applies
- * loads as tractions, because a point load gives unbounded stress in 2D.
+ * Nodal force in N. Holds consistent nodal forces computed ahead of time (for
+ * example by tractionFieldLoads). Not offered as a UI load type, because a true
+ * concentrated load gives unbounded stress in 2D.
  */
 export interface PointLoad {
   node: number;

@@ -28,21 +28,3 @@ export function patchMesh(): Mesh {
   elements.push(4, 5, 6, 4, 6, 7);
   return mesh(nodes, elements);
 }
-
-/**
- * Rectangle [0, L] × [0, H] on an (nx+1) × (ny+1) node grid, each cell split
- * into two triangles. Node (i, j) has index j·(nx+1) + i.
- */
-export function rectangleMesh(L: number, H: number, nx: number, ny: number): Mesh {
-  const nodes: number[] = [];
-  for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) nodes.push((L * i) / nx, (H * j) / ny);
-  const elements: number[] = [];
-  const id = (i: number, j: number) => j * (nx + 1) + i;
-  for (let j = 0; j < ny; j++) {
-    for (let i = 0; i < nx; i++) {
-      elements.push(id(i, j), id(i + 1, j), id(i + 1, j + 1));
-      elements.push(id(i, j), id(i + 1, j + 1), id(i, j + 1));
-    }
-  }
-  return mesh(nodes, elements);
-}

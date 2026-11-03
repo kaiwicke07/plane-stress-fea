@@ -5,7 +5,8 @@
 import { choleskySolve } from './linalg/dense';
 import { NotPositiveDefiniteError } from './linalg/errors';
 import type { CsrMatrix } from './linalg/sparse';
-import { type Constraint, dofIndex, type EdgeTraction, type Mesh } from './model';
+import { type Constraint, dofIndex, type EdgeTraction, type Mesh, type PointLoad } from './model';
+import { GAUSS_LINE_2 } from './quadrature';
 
 /**
  * Adds consistent nodal forces for uniform edge tractions to F. For a linear
@@ -31,6 +32,45 @@ export function addTractionLoads(
     F[2 * b] += tx * half;
     F[2 * b + 1] += ty * half;
   }
+}
+
+/**
+ * Consistent nodal forces f = ∫ Nᵀ·t̄(x, y) · t ds for a traction that varies
+ * along the edges, integrated with 2-point Gauss quadrature. This is exact when
+ * the traction is at most quadratic along each edge.
+ *
+ * Returns point loads because a Model must be serialisable (it is sent to a Web
+ * Worker), so it cannot carry the traction function itself.
+ */
+export function tractionFieldLoads(
+  mesh: Mesh,
+  edges: readonly (readonly [number, number])[],
+  traction: (x: number, y: number) => readonly [number, number],
+  thickness: number,
+): PointLoad[] {
+  const { nodes } = mesh;
+  const forces = new Map<number, [number, number]>();
+  const add = (node: number, fx: number, fy: number) => {
+    const f = forces.get(node) ?? [0, 0];
+    f[0] += fx;
+    f[1] += fy;
+    forces.set(node, f);
+  };
+
+  for (const [a, b] of edges) {
+    const [xa, ya, xb, yb] = [nodes[2 * a], nodes[2 * a + 1], nodes[2 * b], nodes[2 * b + 1]];
+    const jacobian = Math.hypot(xb - xa, yb - ya) / 2; // ds = (L/2) dξ
+    for (let q = 0; q < GAUSS_LINE_2.points.length; q++) {
+      const xi = GAUSS_LINE_2.points[q];
+      const Na = (1 - xi) / 2;
+      const Nb = (1 + xi) / 2;
+      const [tx, ty] = traction(Na * xa + Nb * xb, Na * ya + Nb * yb);
+      const w = GAUSS_LINE_2.weights[q] * jacobian * thickness;
+      add(a, w * Na * tx, w * Na * ty);
+      add(b, w * Nb * tx, w * Nb * ty);
+    }
+  }
+  return [...forces].map(([node, [fx, fy]]) => ({ node, fx, fy }));
 }
 
 export interface DofPartition {

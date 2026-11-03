@@ -30,11 +30,20 @@ with a thickness `t` in mm.
 
 ### Cantilever
 
-Compare tip deflection with Euler–Bernoulli beam theory plus the Timoshenko shear
-term: δ = PL³/(3EI) + PL/(κGA), with I = t·h³/12 and κ = 5/6.
+Done in Phase 2; full write-up in [math note 6](math/06-cantilever-validation.md).
 
-Compare bending stress σ = Mc/I at x = L/2, **not at the wall**. The fully fixed
-corners are stress singularities and never converge.
+- **Exact wall** (code verification): prescribe the exact elasticity solution on
+  the wall and apply the parabolic end shear exactly. Report tip, L2 and
+  energy-norm errors and their observed orders (theory: 2, 2, 1).
+- **Clamped wall** (engineering check): compare the Richardson-extrapolated tip
+  deflection with Timoshenko beam theory, δ = PL³/(3EI) + PL/(κGA), κ = 5/6.
+- Compare bending stress σ = Mc/I at x = L/2, **not at the wall**. The fully
+  fixed corners are stress singularities and never converge.
+
+Stress at a free surface from plain nodal averaging converges only at O(h), from
+below (3.4% low at 32 cells through the depth). The plate-with-hole K_t is also a
+boundary peak, so Phase 4 needs strong mesh grading at the hole or a better
+recovery method, stated next to each result.
 
 ### Plate with a hole: stress definitions
 

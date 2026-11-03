@@ -9,6 +9,7 @@ and likely interview questions.
 3. [Assembly, loads and boundary conditions](03-assembly-and-boundary-conditions.md)
 4. [Solving K·u = F](04-linear-solvers.md)
 5. [Stress recovery and von Mises](05-stress-recovery.md)
+6. [Cantilever validation](06-cantilever-validation.md): exact solution, error norms, convergence rates
 
 The whole pipeline in one line:
 

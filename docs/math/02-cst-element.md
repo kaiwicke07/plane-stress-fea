@@ -92,8 +92,9 @@ compared with Timoshenko beam theory:
 | 80 × 16 | 2 754 | 0.98 |
 
 It does converge, but slowly. The 6-node triangle (LST, Phase 7) has quadratic
-displacement and linear strain, so it represents bending far better. Phase 2
-redoes this study against an exact elasticity solution.
+displacement and linear strain, so it represents bending far better. Note 6
+redoes this study against an exact elasticity solution, with measured
+convergence rates.
 
 ## Tests
 

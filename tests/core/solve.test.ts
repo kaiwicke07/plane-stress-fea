@@ -9,7 +9,8 @@ import { planeStressD } from '../../src/core/material';
 import type { Constraint, Model } from '../../src/core/model';
 import { nodalAverage, vonMises } from '../../src/core/postprocess';
 import { solve } from '../../src/core/solve';
-import { mesh, patchMesh, rectangleMesh, STEEL } from '../fixtures/meshes';
+import { rectangleMesh } from '../../src/mesh/structured';
+import { mesh, patchMesh, STEEL } from '../fixtures/meshes';
 
 const { E, nu } = STEEL;
 const D = planeStressD(E, nu);
@@ -127,7 +128,7 @@ describe('patch tests', () => {
 describe('cantilever: equilibrium and solver agreement', () => {
   // 100 × 20 mm, 5 mm thick, clamped on the left, shear traction on the right.
   const [L, H, nx, ny] = [100, 20, 20, 4];
-  const m = rectangleMesh(L, H, nx, ny);
+  const m = rectangleMesh({ width: L, height: H, nx, ny });
   const rightEdge = Array.from({ length: ny }, (_, j) => ({
     nodes: [j * (nx + 1) + nx, (j + 1) * (nx + 1) + nx] as const,
     tx: 0,
@@ -193,7 +194,7 @@ describe('loads', () => {
   });
 
   it('rejects a traction on a pair of nodes that is not an element edge', () => {
-    const m = rectangleMesh(1, 1, 2, 2);
+    const m = rectangleMesh({ width: 1, height: 1, nx: 2, ny: 2 });
     expect(() => addTractionLoads(m, [{ nodes: [0, 8], tx: 1, ty: 0 }], 1, new Float64Array(18))).toThrow(
       /not an element edge/,
     );

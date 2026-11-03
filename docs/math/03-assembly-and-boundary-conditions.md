@@ -86,6 +86,12 @@ Along an edge the shape functions are linear, and each integrates to L/2. So a
 uniform traction puts half of the edge's total force t̄·L·t on each end node.
 Quadratic elements (Phase 7) split it 1/6, 4/6, 1/6 instead.
 
+A traction that varies along the edge (`tractionFieldLoads`) is integrated with
+2-point Gauss quadrature, ξ = ±1/√3, ds = (L/2)dξ. That is exact for a cubic
+integrand, so it is exact for any traction up to quadratic. The result is stored
+as point loads, because a model is sent to a Web Worker and cannot carry a
+function.
+
 **Why tractions instead of point loads?** In 2D elasticity a point force gives
 stress that grows as 1/r near the load point (the Flamant solution). Refining
 the mesh there makes the peak stress keep rising and never converge.
