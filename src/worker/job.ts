@@ -5,16 +5,28 @@ import { assembleLoads } from '../core/assembly';
 import type { Material, Solution } from '../core/model';
 import { solve } from '../core/solve';
 import type { TaggedMesh } from '../mesh/tagged-mesh';
-import { buildModel, type EdgeLoad, type EdgeSupport } from '../model/spec';
+import type { EditorGeometry } from '../editor/model';
+import { buildStudy } from '../editor/study';
+import { buildModel, type EdgeLoad, type EdgeSupport, type StudySetup } from '../model/spec';
 import { presetById } from '../presets';
+
+/** What to solve: a built-in preset, or geometry from the editor. */
+export type JobSource =
+  | { kind: 'preset'; presetId: string; values: Record<string, number> }
+  | { kind: 'custom'; geometry: EditorGeometry };
 
 export interface SolveJob {
   id: number;
-  presetId: string;
-  values: Record<string, number>;
+  source: JobSource;
   density: number;
   material: Material;
   thickness: number;
+}
+
+function setupFor({ source, density }: SolveJob): StudySetup {
+  return source.kind === 'preset'
+    ? presetById(source.presetId).build(source.values, density)
+    : buildStudy(source.geometry, density);
 }
 
 export interface SolveResult {
@@ -34,7 +46,7 @@ export type WorkerResponse = { type: 'result'; result: SolveResult } | { type: '
 
 export function runJob(job: SolveJob): SolveResult {
   const t0 = performance.now();
-  const setup = presetById(job.presetId).build(job.values, job.density);
+  const setup = setupFor(job);
   const t1 = performance.now();
 
   const model = buildModel(setup, job.material, job.thickness);

@@ -7,6 +7,8 @@
   --text-muted: #8b949e;
   --accent: #4fa3ff;
   --grid: #1a2029;
+  --grid-major: #252d38;
+  --editor-fill: rgb(79 163 255 / 0.07);
 
   /* Viewport annotation colours (read by the Canvas2D overlay). */
   --viz-outline: rgb(230 237 243 / 0.55);
@@ -244,6 +246,106 @@ input[type='range'] {
   }
 }
 
+button {
+  min-height: 30px;
+  padding: 4px 12px;
+  color: var(--text);
+  font: inherit;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--text-muted);
+}
+
+button:disabled {
+  color: var(--text-muted);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 10px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.tool-grid label {
+  padding: 6px 8px;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.tool-grid input {
+  position: absolute;
+  opacity: 0;
+}
+
+.tool-grid label:has(input:checked) {
+  color: var(--accent);
+  background: rgb(79 163 255 / 0.16);
+  border-color: rgb(79 163 255 / 0.5);
+}
+
+.tool-grid label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.issues {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  font-size: 13px;
+  list-style: none;
+}
+
+.issue-error span {
+  color: var(--status-critical);
+}
+
+/* View tabs (custom part) */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab {
+  border-color: transparent;
+  background: transparent;
+}
+
+.tab.is-active {
+  color: var(--accent);
+  background: var(--surface);
+  border-color: var(--border);
+}
+
 /* Viewport toolbar */
 
 .toolbar {
@@ -394,6 +496,45 @@ input[type='range'] {
   border-radius: 4px;
 }
 
+/* Geometry editor */
+
+.editor {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: default;
+}
+
+.editor.tool-outline,
+.editor.tool-polygon-hole,
+.editor.tool-circle-hole {
+  cursor: crosshair;
+}
+
+.editor-status {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  left: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  color: var(--text-muted);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.editor-coords {
+  font-family: var(--font-mono);
+}
+
 /* Legend */
 
 .legend {
@@ -495,7 +636,8 @@ input[type='range'] {
     padding: 16px;
   }
 
-  .viewport {
+  .viewport,
+  .editor {
     flex: none;
     height: 60vh;
   }

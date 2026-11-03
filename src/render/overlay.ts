@@ -28,8 +28,13 @@ export interface OverlayParams {
 
 type Vec = [number, number];
 
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+
+/** A load as drawn: any edge load, without the edge it is attached to. */
+export type DistributedLoad = DistributiveOmit<EdgeLoad, 'edge'>;
+
 /** A geometry edge as a screen-space polyline with outward normals per segment. */
-interface ScreenEdge {
+export interface ScreenEdge {
   points: Vec[];
   normals: Vec[];
   length: number;
@@ -102,6 +107,23 @@ function screenEdge(view: View, mesh: TaggedMesh, positions: Float64Array, tag: 
   return { points, normals, length };
 }
 
+/**
+ * A world-space polyline as a screen edge. Points must run with the material
+ * on their left (outline counter-clockwise, holes clockwise).
+ */
+export function screenPolyline(view: View, points: readonly (readonly [number, number])[]): ScreenEdge {
+  const screen = points.map(([x, y]) => worldToScreen(view, x, y));
+  const normals: Vec[] = [];
+  let length = 0;
+  for (let k = 0; k + 1 < screen.length; k++) {
+    const [dx, dy] = [screen[k + 1][0] - screen[k][0], screen[k + 1][1] - screen[k][1]];
+    const l = Math.hypot(dx, dy) || 1;
+    length += l;
+    normals.push([-dy / l, dx / l]);
+  }
+  return { points: screen, normals, length };
+}
+
 /** Evenly spaced samples along the polyline: position, tangent, normal and arc-length fraction. */
 function samples(edge: ScreenEdge, spacing: number): { at: Vec; tangent: Vec; normal: Vec; s: number }[] {
   const out: { at: Vec; tangent: Vec; normal: Vec; s: number }[] = [];
@@ -128,7 +150,12 @@ function samples(edge: ScreenEdge, spacing: number): { at: Vec; tangent: Vec; no
   return out;
 }
 
-function drawSupport(ctx: CanvasRenderingContext2D, edge: ScreenEdge, support: EdgeSupport, color: string): void {
+export function drawSupport(
+  ctx: CanvasRenderingContext2D,
+  edge: ScreenEdge,
+  support: Pick<EdgeSupport, 'kind'>,
+  color: string,
+): void {
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
   ctx.lineWidth = 1.5;
@@ -159,7 +186,7 @@ function drawSupport(ctx: CanvasRenderingContext2D, edge: ScreenEdge, support: E
   ctx.stroke();
 }
 
-function loadVector(load: EdgeLoad, normal: Vec): Vec {
+function loadVector(load: DistributedLoad, normal: Vec): Vec {
   // Screen y is down, so flip the y component of world vectors.
   switch (load.kind) {
     case 'force':
@@ -172,7 +199,7 @@ function loadVector(load: EdgeLoad, normal: Vec): Vec {
   }
 }
 
-function loadLabel(load: EdgeLoad): string {
+function loadLabel(load: DistributedLoad): string {
   const fmt = (v: number) => (Math.abs(v) >= 100 ? v.toFixed(0) : v.toPrecision(3));
   switch (load.kind) {
     case 'force':
@@ -185,7 +212,12 @@ function loadLabel(load: EdgeLoad): string {
   }
 }
 
-function drawLoad(ctx: CanvasRenderingContext2D, edge: ScreenEdge, load: EdgeLoad, colors: OverlayColors): void {
+export function drawLoad(
+  ctx: CanvasRenderingContext2D,
+  edge: ScreenEdge,
+  load: DistributedLoad,
+  colors: Pick<OverlayColors, 'load' | 'label'>,
+): void {
   const midNormal = edge.normals[Math.floor(edge.normals.length / 2)] ?? [1, 0];
   const v = loadVector(load, midNormal);
   const magnitude = Math.hypot(v[0], v[1]);

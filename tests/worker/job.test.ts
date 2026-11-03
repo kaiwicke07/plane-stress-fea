@@ -11,8 +11,7 @@ describe('presets through runJob', () => {
     it(`${preset.name}: solves, balances and returns transferable buffers`, () => {
       const result = runJob({
         id: 7,
-        presetId: preset.id,
-        values: defaultValues(preset),
+        source: { kind: 'preset', presetId: preset.id, values: defaultValues(preset) },
         density: 6,
         material: steel,
         thickness: 5,
@@ -28,7 +27,7 @@ describe('presets through runJob', () => {
   it('cantilever matches beam theory closely on a fine mesh', () => {
     const preset = presetById('cantilever');
     const values = { ...defaultValues(preset), load: 1000 };
-    const result = runJob({ id: 1, presetId: 'cantilever', values, density: 16, material: steel, thickness: 5 });
+    const result = runJob({ id: 1, source: { kind: 'preset', presetId: 'cantilever', values }, density: 16, material: steel, thickness: 5 });
     const summary = summarize(result);
     // Tip moves ~0.51 mm (see the validation study); the peak stress M·c/I = 300 MPa
     // sits at the wall corners, which are singular, so only check it is in range.
@@ -41,7 +40,7 @@ describe('presets through runJob', () => {
 
   it('tension strip has the uniform uniaxial solution', () => {
     const preset = presetById('tension-strip');
-    const result = runJob({ id: 1, presetId: 'tension-strip', values: defaultValues(preset), density: 4, material: steel, thickness: 5 });
+    const result = runJob({ id: 1, source: { kind: 'preset', presetId: 'tension-strip', values: defaultValues(preset) }, density: 4, material: steel, thickness: 5 });
     for (const vm of result.solution.elementVonMises) expect(vm).toBeCloseTo(100, 8);
     const summary = summarize(result);
     // Far corner moves by σ·L/E in x and −ν·σ·H/E in y.
@@ -52,7 +51,7 @@ describe('presets through runJob', () => {
 
   it('auto-scales the largest displacement to 10% of the part size', () => {
     const preset = presetById('cantilever');
-    const result = runJob({ id: 1, presetId: 'cantilever', values: defaultValues(preset), density: 4, material: steel, thickness: 5 });
+    const result = runJob({ id: 1, source: { kind: 'preset', presetId: 'cantilever', values: defaultValues(preset) }, density: 4, material: steel, thickness: 5 });
     const scale = autoDeformationScale(result);
     expect(scale * summarize(result).maxDisplacement).toBeCloseTo(0.1 * 100, 10);
   });

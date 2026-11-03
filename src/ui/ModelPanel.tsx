@@ -1,6 +1,6 @@
-import { useId } from 'react';
+import { type ReactNode, useId } from 'react';
 import { MATERIALS } from '../core/material';
-import { PRESETS, presetById } from '../presets';
+import { CUSTOM_PART, PRESETS, presetById } from '../presets';
 import { NumberField } from './NumberField';
 
 export interface ModelInputs {
@@ -15,14 +15,20 @@ export interface ModelInputs {
 interface ModelPanelProps {
   inputs: ModelInputs;
   onChange: (inputs: ModelInputs) => void;
+  /** Geometry editor controls, shown when the custom part is selected. */
+  customPanel: ReactNode;
 }
+
+const CUSTOM_DENSITY_NOTE =
+  "Elements across the part's narrowest feature (its shortest outline edge); holes are refined further.";
 
 const DENSITY_RANGE = { min: 2, max: 40 } as const;
 
-export function ModelPanel({ inputs, onChange }: ModelPanelProps) {
+export function ModelPanel({ inputs, onChange, customPanel }: ModelPanelProps) {
   const ids = { preset: useId(), density: useId(), material: useId() };
-  const preset = presetById(inputs.presetId);
-  const values = inputs.values[preset.id];
+  const custom = inputs.presetId === CUSTOM_PART;
+  const preset = custom ? null : presetById(inputs.presetId);
+  const values = preset ? inputs.values[preset.id] : {};
   const material = MATERIALS[inputs.materialIndex];
 
   return (
@@ -41,11 +47,16 @@ export function ModelPanel({ inputs, onChange }: ModelPanelProps) {
               {p.name}
             </option>
           ))}
+          <option value={CUSTOM_PART}>Custom part (draw your own)</option>
         </select>
-        <p className="muted field-note">{preset.description}</p>
+        <p className="muted field-note">
+          {preset ? preset.description : 'Draw an outline and holes, then set supports and loads on its edges.'}
+        </p>
       </div>
 
-      {preset.params.map((p) => (
+      {custom && customPanel}
+
+      {preset?.params.map((p) => (
         <NumberField
           key={`${preset.id}.${p.key}`}
           label={p.label}
@@ -74,7 +85,7 @@ export function ModelPanel({ inputs, onChange }: ModelPanelProps) {
           onChange={(e) => onChange({ ...inputs, density: Number(e.target.value) })}
         />
         <p id={`${ids.density}-note`} className="muted field-note">
-          {preset.densityNote}
+          {preset ? preset.densityNote : CUSTOM_DENSITY_NOTE}
         </p>
       </div>
 

@@ -111,6 +111,9 @@ export const PRESETS: readonly Preset[] = [
   },
 ];
 
+/** Part ID of the user's own geometry from the editor, listed alongside the presets. */
+export const CUSTOM_PART = 'custom';
+
 export function presetById(id: string): Preset {
   const preset = PRESETS.find((p) => p.id === id);
   if (!preset) throw new Error(`Unknown preset "${id}"`);
