@@ -10,6 +10,7 @@ and likely interview questions.
 4. [Solving K·u = F](04-linear-solvers.md)
 5. [Stress recovery and von Mises](05-stress-recovery.md)
 6. [Cantilever validation](06-cantilever-validation.md): exact solution, error norms, convergence rates
+7. [Reading the results](07-visualisation.md): deformation scale, nodal vs element plots, colour, singular peaks
 
 The whole pipeline in one line:
 

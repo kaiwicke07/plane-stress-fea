@@ -8,12 +8,21 @@
   --accent: #4fa3ff;
   --grid: #1a2029;
 
+  /* Viewport annotation colours (read by the Canvas2D overlay). */
+  --viz-outline: rgb(230 237 243 / 0.55);
+  --viz-support: #c3c2b7;
+
+  /* Status colours: reserved, always paired with an icon and a label. */
+  --status-good: #0ca30c;
+  --status-critical: #d03b3b;
+
   --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
   --radius: 6px;
   --gap: 12px;
 
   color-scheme: dark;
+  accent-color: var(--accent);
 }
 
 *,
@@ -36,7 +45,8 @@ body {
 }
 
 h1,
-h2 {
+h2,
+h3 {
   margin: 0;
   font-weight: 600;
 }
@@ -45,23 +55,49 @@ h1 {
   font-size: 16px;
 }
 
-h2 {
-  font-size: 13px;
-  letter-spacing: 0.04em;
+h2,
+h3 {
+  font-size: 12px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+h3 {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
 .muted {
   color: var(--text-muted);
 }
 
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Layout */
+
 .app {
   display: grid;
   grid-template:
     'header header header' auto
     'model viewport results' 1fr
-    / 280px 1fr 300px;
+    / 280px minmax(0, 1fr) 300px;
   gap: var(--gap);
   height: 100%;
   padding: var(--gap);
@@ -82,11 +118,12 @@ h2 {
 }
 
 .panel {
+  min-height: 0;
+  padding: var(--gap);
+  overflow: auto;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: var(--gap);
-  overflow: auto;
 }
 
 .panel-model {
@@ -97,11 +134,202 @@ h2 {
   grid-area: results;
 }
 
-.viewport {
+.viewport-area {
   grid-area: viewport;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Form controls */
+
+.field {
   display: grid;
-  place-items: center;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.field label {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.field label output {
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+.field-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field-unit {
+  min-width: 2.5em;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.field-note {
+  margin: 0;
+  font-size: 12px;
+}
+
+.field-error {
+  color: var(--status-critical);
+  font-size: 12px;
+}
+
+select,
+input[type='number'] {
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 8px;
+  color: var(--text);
+  font: inherit;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+input[type='number'] {
+  font-family: var(--font-mono);
+}
+
+input[aria-invalid='true'] {
+  border-color: var(--status-critical);
+}
+
+input[type='range'] {
+  width: 100%;
+  margin: 0;
+}
+
+/* accent-color tints checkboxes, radios and ranges; this restyles them where it is unsupported. */
+@supports not (accent-color: red) {
+  input[type='range'] {
+    appearance: none;
+    height: 20px;
+    background: transparent;
+  }
+  input[type='range']::-webkit-slider-runnable-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+  input[type='range']::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    margin-top: -5px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  input[type='range']::-moz-range-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+  input[type='range']::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border: 0;
+    border-radius: 50%;
+  }
+}
+
+/* Viewport toolbar */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px var(--gap);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.toolbar-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.toolbar select {
+  width: auto;
+}
+
+.segmented {
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.segmented label {
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.segmented label:has(input:checked) {
+  color: var(--accent);
+  background: rgb(79 163 255 / 0.16);
+  border-radius: 3px;
+}
+
+.segmented input {
+  position: absolute;
+  opacity: 0;
+}
+
+.segmented label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+}
+
+.deform {
+  flex: 1 1 200px;
+}
+
+.deform input {
+  flex: 1;
+  min-width: 80px;
+}
+
+.deform output {
+  min-width: 4.5em;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: right;
+}
+
+/* Viewport */
+
+.viewport {
+  position: relative;
+  flex: 1;
   min-height: 320px;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  /* Custom pan and pinch handling on the canvas. */
+  touch-action: none;
+  cursor: grab;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background-color: var(--bg);
@@ -111,15 +339,168 @@ h2 {
   background-size: 24px 24px;
 }
 
+.viewport:active {
+  cursor: grabbing;
+}
+
+.viewport-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.viewport-status {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.viewport-status.is-error {
+  right: 12px;
+  color: var(--status-critical);
+}
+
+.viewport-help {
+  position: absolute;
+  bottom: 6px;
+  left: 12px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.viewport:focus-visible .viewport-help,
+.viewport:hover .viewport-help {
+  opacity: 1;
+}
+
+.probe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+  background: rgb(22 27 34 / 0.92);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+/* Legend */
+
+.legend {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  pointer-events: none;
+  background: rgb(22 27 34 / 0.85);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.legend figcaption {
+  display: grid;
+  margin-bottom: 6px;
+}
+
+.legend-title {
+  font-weight: 600;
+}
+
+.legend-sub {
+  color: var(--text-muted);
+}
+
+.legend-body {
+  display: flex;
+  gap: 8px;
+}
+
+.legend-bar {
+  width: 12px;
+  height: 140px;
+  border-radius: 2px;
+}
+
+.legend-ticks {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: -0.5em 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  list-style: none;
+}
+
+/* Results */
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 12px;
+  margin: 12px 0 0;
+}
+
+.stats dt {
+  color: var(--text-muted);
+}
+
+.stats dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
+.note {
+  margin: 10px 0 0;
+  font-size: 12px;
+}
+
+.tag {
+  padding: 1px 6px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+}
+
+.tag-good {
+  color: var(--status-good);
+}
+
+.tag-critical {
+  color: var(--status-critical);
+}
+
 @media (max-width: 900px) {
   .app {
     grid-template:
       'header' auto
-      'viewport' minmax(320px, 60vh)
+      'viewport' auto
       'model' auto
       'results' auto
-      / 1fr;
+      / minmax(0, 1fr);
     height: auto;
     padding: 16px;
+  }
+
+  .viewport {
+    flex: none;
+    height: 60vh;
+  }
+
+  .legend-bar {
+    height: 96px;
   }
 }
