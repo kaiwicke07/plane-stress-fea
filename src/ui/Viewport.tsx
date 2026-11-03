@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DIVERGING_STOPS, HEAT_STOPS } from '../render/colormap';
 import { FieldRenderer } from '../render/field-renderer';
-import { elementValues, type FieldId, fieldById, fieldRange, nodalValues } from '../render/fields';
+import { elementValues, type FieldId, fieldById, fieldRange, nodalValues, type StressDisplay } from '../render/fields';
 import { drawOverlay, type OverlayColors } from '../render/overlay';
 import { deformedPositions, locate } from '../render/probe';
 import { type Bounds, boundsOf, fitView, panBy, screenToWorld, type View, zoomAt } from '../render/view';
@@ -11,8 +11,7 @@ import { Legend } from './Legend';
 
 export interface DisplaySettings {
   field: FieldId;
-  /** Nodal-averaged (smooth) or raw element values. */
-  smooth: boolean;
+  stress: StressDisplay;
   bands: number;
   showMesh: boolean;
   showUndeformed: boolean;
@@ -108,18 +107,20 @@ export function Viewport({ result, display, deformationScale, busy, error }: Vie
 
   const { values, range } = useMemo(() => {
     if (!result) return { values: new Float64Array(), range: [0, 1] as [number, number] };
-    const vals = display.smooth
-      ? nodalValues(display.field, result.solution)
-      : elementValues(display.field, result.solution, result.mesh);
+    const vals =
+      display.stress === 'element'
+        ? elementValues(display.field, result.solution, result.mesh)
+        : nodalValues(display.field, result.solution, display.stress);
     return { values: vals, range: fieldRange(vals, field.diverging) };
-  }, [result, display.field, display.smooth, field.diverging]);
+  }, [result, display.field, display.stress, field.diverging]);
+  const perElement = display.stress === 'element';
 
   useEffect(() => {
     const renderer = rendererRef.current;
     if (!renderer || !result) return;
     renderer.setColormap(stops);
-    renderer.setValues(values, !display.smooth);
-  }, [result, values, stops, display.smooth]);
+    renderer.setValues(values, perElement);
+  }, [result, values, stops, perElement]);
 
   const deformed = useMemo(
     () => (result ? deformedPositions(result.mesh.nodes, result.solution.displacements, deformationScale) : null),
@@ -192,7 +193,7 @@ export function Viewport({ result, display, deformationScale, busy, error }: Vie
       sx,
       sy,
       world,
-      value: display.smooth ? interp((n) => values[n]) : values[hit.element],
+      value: perElement ? values[hit.element] : interp((n) => values[n]),
       ux: interp((n) => u[2 * n]),
       uy: interp((n) => u[2 * n + 1]),
     });
@@ -274,7 +275,7 @@ export function Viewport({ result, display, deformationScale, busy, error }: Vie
       <canvas ref={glCanvasRef} className="viewport-canvas" />
       <canvas ref={overlayRef} className="viewport-canvas" />
 
-      {result && <Legend field={field} range={range} stops={stops} bands={display.bands} smooth={display.smooth} />}
+      {result && <Legend field={field} range={range} stops={stops} bands={display.bands} stress={display.stress} />}
 
       {probe && (
         <div className="probe" style={{ transform: `translate(${probe.sx + 14}px, ${probe.sy + 14}px)` }}>

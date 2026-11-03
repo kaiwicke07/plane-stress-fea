@@ -21,7 +21,7 @@ describe('presets through runJob', () => {
       const summary = summarize(result);
       expect(summary.equilibriumError).toBeLessThan(1e-6);
       expect(summary.maxDisplacement).toBeGreaterThan(0);
-      expect(transferables(result).length).toBe(10);
+      expect(transferables(result).length).toBe(12);
     });
   }
 
@@ -35,7 +35,8 @@ describe('presets through runJob', () => {
     expect(summary.maxDisplacement).toBeGreaterThan(0.49);
     expect(summary.maxDisplacement).toBeLessThan(0.53);
     expect(summary.maxNodalVonMises).toBeGreaterThan(250);
-    expect(summary.factorOfSafety).toBeCloseTo(steel.yieldStrength / Math.max(summary.maxNodalVonMises, summary.maxElementVonMises), 12);
+    const peak = Math.max(summary.maxNodalVonMises, summary.maxElementVonMises, summary.maxSprVonMises);
+    expect(summary.factorOfSafety).toBeCloseTo(steel.yieldStrength / peak, 12);
   });
 
   it('tension strip has the uniform uniaxial solution', () => {

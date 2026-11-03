@@ -65,3 +65,48 @@ export function timoshenkoTip(params: CantileverParams): number {
   const G = material.E / (2 * (1 + material.nu));
   return eulerBernoulliTip(params) + (P * L) / ((5 / 6) * G * depth * thickness);
 }
+
+// ── Plate with a central hole under uniaxial tension ───────────────────────
+//
+// Plate width W (across the load), hole diameter d = 2a, load along x.
+//   σ_gross = P / (W·t)            far-field stress (the applied traction)
+//   σ_net   = P / ((W − d)·t)      mean stress on the net section through the hole
+//   K_t,g = σ_max / σ_gross,  K_t,n = σ_max / σ_net,  K_t,g = K_t,n · W / (W − d)
+// See docs/PLAN.md and docs/math/08-meshing.md.
+
+/** Which reference stress a stress concentration factor is normalised by. */
+export type StressBasis = 'gross' | 'net';
+
+export interface StressConcentration {
+  basis: StressBasis;
+  value: number;
+}
+
+/** Label generated from the basis, so a gross value can never be shown as net. */
+export function ktLabel(basis: StressBasis): string {
+  return basis === 'gross' ? 'K_t,g (gross section)' : 'K_t,n (net section)';
+}
+
+/** Kirsch: infinite plate, so K_t,g = 3 at the hole edge. */
+export const KIRSCH_KT: StressConcentration = { basis: 'gross', value: 3 };
+
+/**
+ * Kirsch's σxx along the net-section line x = 0, y ≥ a, divided by σ_gross:
+ * σθ(r, 90°)/σ = 1 + ½(a/r)² + (3/2)(a/r)⁴. Infinite plate only.
+ */
+export function kirschLigament(a: number, y: number): number {
+  const s = (a / y) ** 2;
+  return 1 + s / 2 + (3 * s * s) / 2;
+}
+
+/** Heywood's empirical fit for a finite-width plate: K_t,n ≈ 2 + (1 − d/W)³. */
+export function heywoodKt(dOverW: number): StressConcentration {
+  return { basis: 'net', value: 2 + (1 - dOverW) ** 3 };
+}
+
+/** Converts a stress concentration factor to the other basis. */
+export function convertKt(kt: StressConcentration, to: StressBasis, dOverW: number): StressConcentration {
+  if (kt.basis === to) return kt;
+  // σ_net = σ_gross / (1 − d/W)
+  return { basis: to, value: to === 'gross' ? kt.value / (1 - dOverW) : kt.value * (1 - dOverW) };
+}

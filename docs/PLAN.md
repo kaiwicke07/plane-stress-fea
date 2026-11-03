@@ -41,9 +41,8 @@ Done in Phase 2; full write-up in [math note 6](math/06-cantilever-validation.md
   fixed corners are stress singularities and never converge.
 
 Stress at a free surface from plain nodal averaging converges only at O(h), from
-below (3.4% low at 32 cells through the depth). The plate-with-hole K_t is also a
-boundary peak, so Phase 4 needs strong mesh grading at the hole or a better
-recovery method, stated next to each result.
+below (3.4% low at 32 cells through the depth). Phase 4 added SPR recovery, which
+halves that error (1.4%) but keeps the O(h) order for CST in bending.
 
 ### Plate with a hole: stress definitions
 
@@ -93,3 +92,13 @@ net-section K_t falls below 3.
   edge the exact stress state is uniaxial, so the two coincide there. FEA values at
   boundary nodes come from stress recovery, and the recovery method is stated
   alongside the result.
+
+**Status (Phase 4):** implemented in `src/validation/plate-cases.ts` and tested in
+`tests/validation/plate.test.ts`. Quarter model with symmetry rollers, graded
+DistMesh, and K_t from an SPR hoop-stress fit along the hole edge (`spr-arc-fit`).
+At 32 elements per hole radius:
+- Wide plate (W/d = 10): K_t,g = 3.031, within 0.06% of Heywood converted to
+  gross (3.032), and 1.0% above Kirsch, which is the finite-width effect.
+- d/W = 0.1–0.5: K_t,n is within 0.06–1.7% of Heywood.
+
+Full tables in [math note 8](math/08-meshing.md).

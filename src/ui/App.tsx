@@ -19,7 +19,7 @@ const INITIAL_INPUTS: ModelInputs = {
 
 const INITIAL_DISPLAY: DisplaySettings = {
   field: 'vonMises',
-  smooth: true,
+  stress: 'spr',
   bands: 0,
   showMesh: true,
   showUndeformed: true,

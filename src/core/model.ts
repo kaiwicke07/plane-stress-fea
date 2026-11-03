@@ -72,6 +72,10 @@ export interface Solution {
   nodalStress: Float64Array;
   /** Von Mises stress computed from the averaged nodal components, MPa. */
   nodalVonMises: Float64Array;
+  /** Superconvergent patch recovery (SPR) of nodal stress, [σx, σy, τxy] per node, MPa. */
+  sprStress: Float64Array;
+  /** Von Mises stress from the SPR components, MPa. */
+  sprVonMises: Float64Array;
   solver: {
     method: 'pcg' | 'cholesky';
     iterations: number;

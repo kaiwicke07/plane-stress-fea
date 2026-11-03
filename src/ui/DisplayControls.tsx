@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { FIELDS, type FieldId } from '../render/fields';
+import { FIELDS, type FieldId, type StressDisplay } from '../render/fields';
 import { formatNumber } from './format';
 import type { DisplaySettings } from './Viewport';
 
@@ -13,6 +13,12 @@ interface DisplayControlsProps {
 }
 
 const BANDS = 10;
+
+const STRESS_OPTIONS: [StressDisplay, string][] = [
+  ['average', 'Averaged'],
+  ['spr', 'SPR'],
+  ['element', 'Element'],
+];
 
 export function DisplayControls({
   display,
@@ -41,14 +47,12 @@ export function DisplayControls({
 
       <fieldset className="toolbar-group segmented">
         <legend className="visually-hidden">Stress values</legend>
-        <label>
-          <input type="radio" name="smooth" checked={display.smooth} onChange={() => set({ smooth: true })} />
-          Nodal
-        </label>
-        <label>
-          <input type="radio" name="smooth" checked={!display.smooth} onChange={() => set({ smooth: false })} />
-          Element
-        </label>
+        {STRESS_OPTIONS.map(([value, label]) => (
+          <label key={value}>
+            <input type="radio" name="stress" checked={display.stress === value} onChange={() => set({ stress: value })} />
+            {label}
+          </label>
+        ))}
       </fieldset>
 
       <div className="toolbar-group">

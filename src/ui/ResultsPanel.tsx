@@ -26,7 +26,9 @@ export function ResultsPanel({ result, summary, deformationScale }: ResultsPanel
       <dl className="stats">
         <dt>Max displacement</dt>
         <dd>{formatWithUnit(summary.maxDisplacement, 'mm')}</dd>
-        <dt>Max von Mises (nodal)</dt>
+        <dt>Max von Mises (SPR)</dt>
+        <dd>{formatWithUnit(summary.maxSprVonMises, 'MPa')}</dd>
+        <dt>Max von Mises (averaged)</dt>
         <dd>{formatWithUnit(summary.maxNodalVonMises, 'MPa')}</dd>
         <dt>Max von Mises (element)</dt>
         <dd>{formatWithUnit(summary.maxElementVonMises, 'MPa')}</dd>
@@ -39,7 +41,7 @@ export function ResultsPanel({ result, summary, deformationScale }: ResultsPanel
         </dd>
       </dl>
       <p className="muted note">
-        σy = {material.yieldStrength} MPa over the larger von Mises maximum. Linear elastic: past yield the
+        σy = {material.yieldStrength} MPa over the largest von Mises maximum. Linear elastic: past yield the
         stresses are not physical. Peaks at sharp corners and supports grow with mesh density.
       </p>
 

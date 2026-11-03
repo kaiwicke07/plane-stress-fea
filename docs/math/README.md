@@ -11,6 +11,7 @@ and likely interview questions.
 5. [Stress recovery and von Mises](05-stress-recovery.md)
 6. [Cantilever validation](06-cantilever-validation.md): exact solution, error norms, convergence rates
 7. [Reading the results](07-visualisation.md): deformation scale, nodal vs element plots, colour, singular peaks
+8. [Meshing, stress recovery and the plate with a hole](08-meshing.md): Delaunay, DistMesh, SPR, K_t by basis
 
 The whole pipeline in one line:
 

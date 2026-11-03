@@ -74,7 +74,7 @@ export function ModelPanel({ inputs, onChange }: ModelPanelProps) {
           onChange={(e) => onChange({ ...inputs, density: Number(e.target.value) })}
         />
         <p id={`${ids.density}-note`} className="muted field-note">
-          Elements across the part's smallest dimension.
+          {preset.densityNote}
         </p>
       </div>
 

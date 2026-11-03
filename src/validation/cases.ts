@@ -82,6 +82,8 @@ export interface CantileverRun {
    * the clamped model has corner singularities.
    */
   midspanStress: number;
+  /** The same, from superconvergent patch recovery (SPR). */
+  midspanSprStress: number;
   /** Beam theory M·c / I at the same point, MPa (also exact in elasticity). */
   beamMidspanStress: number;
   iterations: number;
@@ -113,6 +115,7 @@ function run(params: CantileverParams, ny: number, wall: WallCondition, pattern:
     h: depth / ny,
     tipDeflection: -solution.displacements[2 * tipNode + 1],
     midspanStress: solution.nodalStress[3 * midspanTopNode],
+    midspanSprStress: solution.sprStress[3 * midspanTopNode],
     beamMidspanStress: (P * (L / 2) * (depth / 2)) / ((thickness * depth ** 3) / 12),
     iterations: solution.solver.iterations,
   };

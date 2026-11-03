@@ -72,6 +72,8 @@ export function transferables({ mesh, solution }: SolveResult): ArrayBuffer[] {
     solution.elementVonMises,
     solution.nodalStress,
     solution.nodalVonMises,
+    solution.sprStress,
+    solution.sprVonMises,
   ];
   // Deduplicate in case two views share a buffer; transferring one twice throws.
   return [...new Set(arrays.map((a) => a.buffer as ArrayBuffer))];

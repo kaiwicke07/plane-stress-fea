@@ -4,6 +4,15 @@ import type { Mesh, Solution } from '../core/model';
 
 export type FieldId = 'vonMises' | 'sx' | 'sy' | 'txy' | 'displacement';
 
+/** How stresses are shown: smoothed at nodes (averaged or SPR), or raw per element. */
+export type StressDisplay = 'average' | 'spr' | 'element';
+
+export const STRESS_DISPLAY_LABEL: Record<StressDisplay, string> = {
+  average: 'nodal average',
+  spr: 'SPR recovery',
+  element: 'element',
+};
+
 export interface FieldDef {
   id: FieldId;
   label: string;
@@ -26,14 +35,15 @@ export function fieldById(id: FieldId): FieldDef {
 
 const COMPONENT = { sx: 0, sy: 1, txy: 2 } as const;
 
-/** One value per node. Stresses are the area-weighted nodal averages. */
-export function nodalValues(field: FieldId, solution: Solution): Float64Array {
+/** One value per node, with stresses recovered by area-weighted averaging or SPR. */
+export function nodalValues(field: FieldId, solution: Solution, recovery: 'average' | 'spr' = 'average'): Float64Array {
   const nNodes = solution.displacements.length / 2;
-  if (field === 'vonMises') return solution.nodalVonMises;
   if (field === 'displacement') return displacementMagnitude(solution.displacements);
+  if (field === 'vonMises') return recovery === 'spr' ? solution.sprVonMises : solution.nodalVonMises;
+  const stress = recovery === 'spr' ? solution.sprStress : solution.nodalStress;
   const c = COMPONENT[field];
   const out = new Float64Array(nNodes);
-  for (let n = 0; n < nNodes; n++) out[n] = solution.nodalStress[3 * n + c];
+  for (let n = 0; n < nNodes; n++) out[n] = stress[3 * n + c];
   return out;
 }
 

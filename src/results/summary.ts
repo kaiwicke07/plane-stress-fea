@@ -9,7 +9,9 @@ export interface ResultSummary {
   maxElementVonMises: number;
   /** Largest nodal-averaged von Mises stress, MPa. */
   maxNodalVonMises: number;
-  /** Yield strength over the larger of the two maxima. Infinity if unstressed. */
+  /** Largest SPR-recovered von Mises stress, MPa. */
+  maxSprVonMises: number;
+  /** Yield strength over the largest of the three maxima. Infinity if unstressed. */
   factorOfSafety: number;
   reaction: [number, number];
   /** |ΣR + ΣF| / |ΣF|: zero for a solution in equilibrium. */
@@ -41,7 +43,8 @@ export function summarize(result: SolveResult): ResultSummary {
 
   const maxElementVonMises = max(solution.elementVonMises);
   const maxNodalVonMises = max(solution.nodalVonMises);
-  const peak = Math.max(maxElementVonMises, maxNodalVonMises);
+  const maxSprVonMises = max(solution.sprVonMises);
+  const peak = Math.max(maxElementVonMises, maxNodalVonMises, maxSprVonMises);
   const applied = Math.hypot(appliedForce[0], appliedForce[1]);
 
   return {
@@ -49,6 +52,7 @@ export function summarize(result: SolveResult): ResultSummary {
     maxDisplacementNode,
     maxElementVonMises,
     maxNodalVonMises,
+    maxSprVonMises,
     factorOfSafety: peak > 0 ? material.yieldStrength / peak : Infinity,
     reaction: [rx, ry],
     equilibriumError: applied > 0 ? Math.hypot(rx + appliedForce[0], ry + appliedForce[1]) / applied : 0,
