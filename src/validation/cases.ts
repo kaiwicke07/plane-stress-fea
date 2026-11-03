@@ -144,6 +144,33 @@ export function runClampedWall(
   return { ...base, timoshenkoTipDeflection, ratioToTimoshenko: base.tipDeflection / timoshenkoTipDeflection };
 }
 
+export interface ProfilePoint {
+  /** Height above the neutral axis, mm. */
+  y: number;
+  /** σx from nodal averaging and from SPR, and the exact value, MPa. */
+  average: number;
+  spr: number;
+  exact: number;
+}
+
+/** σx through the depth at midspan (x = L/2) on the clamped model, against σ = M·y/I. */
+export function midspanProfile(params: CantileverParams, ny: number): ProfilePoint[] {
+  const { solution, mesh } = run(params, ny, 'clamped', 'alternating');
+  const exact = cantileverExact(params);
+  const points: ProfilePoint[] = [];
+  for (let n = 0; n < mesh.nodes.length / 2; n++) {
+    const [x, y] = [mesh.nodes[2 * n], mesh.nodes[2 * n + 1]];
+    if (Math.abs(x - params.length / 2) > 1e-9) continue;
+    points.push({
+      y,
+      average: solution.nodalStress[3 * n],
+      spr: solution.sprStress[3 * n],
+      exact: exact.stress(x, y)[0],
+    });
+  }
+  return points.sort((a, b) => a.y - b.y);
+}
+
 export interface ConvergenceStudy {
   runs: ExactWallRun[];
   /** Observed orders between successive levels. */

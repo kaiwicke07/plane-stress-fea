@@ -5,6 +5,9 @@ apply supports and loads, choose a material, and view displacements, von Mises
 stress and the deformed shape. The FEA core, meshing and linear algebra are written
 from scratch, and results are validated against analytical solutions.
 
+The site's **Validation** page (`#/validation`) reruns the cantilever and plate-with-hole
+studies live in the browser and checks them against the same tolerances as the test suite.
+
 See [docs/PLAN.md](docs/PLAN.md) for the roadmap and validation definitions, and
 [docs/math/](docs/math/README.md) for the derivation behind each part of the solver.
 

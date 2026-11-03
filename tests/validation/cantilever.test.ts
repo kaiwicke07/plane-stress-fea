@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { richardson } from '../../src/validation/convergence';
+import { cantileverChecks, clampedChecks } from '../../src/validation/criteria';
 import {
   cantileverConvergence,
   DEFAULT_CANTILEVER,
@@ -24,21 +25,16 @@ describe('cantilever with exact wall displacements', () => {
     }
   });
 
-  it('converges at the theoretical CST rates: O(h²) displacement, O(h) energy', () => {
-    const last = rates.tip.length - 1;
-    expect(rates.tip[last]).toBeGreaterThan(1.9);
-    expect(rates.tip[last]).toBeLessThan(2.1);
-    expect(rates.displacementL2[last]).toBeGreaterThan(1.9);
-    expect(rates.displacementL2[last]).toBeLessThan(2.1);
-    expect(rates.energy[last]).toBeGreaterThan(0.95);
-    expect(rates.energy[last]).toBeLessThan(1.05);
+  // The orders (theory 2, 2, 1) and the 0.3% tip-error limit are the shared
+  // criteria the validation page displays.
+  it.each(cantileverChecks({ runs, rates }))('$label: $measured (required $required)', (check) => {
+    expect(check.pass).toBe(true);
   });
 
-  it('matches the exact tip deflection to 0.3% on the finest mesh', () => {
+  it('approaches the exact tip deflection from below, since CST is too stiff', () => {
     const finest = runs[runs.length - 1];
     expect(finest.exactTipDeflection).toBeCloseTo(0.5, 12);
-    expect(finest.tipError).toBeLessThan(0.003);
-    expect(finest.tipDeflection).toBeLessThan(finest.exactTipDeflection); // CST is too stiff
+    expect(finest.tipDeflection).toBeLessThan(finest.exactTipDeflection);
   });
 
   it('is more accurate with alternating diagonals than with one diagonal direction', () => {
@@ -53,8 +49,8 @@ describe('cantilever with a fully clamped wall', () => {
   const fine = runClampedWall(DEFAULT_CANTILEVER, 32);
   const converged = richardson(coarse.tipDeflection, fine.tipDeflection, 2);
 
-  it('converges to Timoshenko beam theory within 0.5%', () => {
-    expect(Math.abs(converged / fine.timoshenkoTipDeflection - 1)).toBeLessThan(0.005);
+  it.each(clampedChecks(coarse, fine))('$label: $measured (required $required)', (check) => {
+    expect(check.pass).toBe(true);
   });
 
   it('deflects more than the exact-wall model, which suppresses wall shear rotation', () => {

@@ -9,6 +9,7 @@ import {
   kirschLigament,
   ktLabel,
 } from '../../src/validation/analytical';
+import { heywoodCheck, kirschChecks, ligamentCheck } from '../../src/validation/criteria';
 import { holeMesh, KIRSCH_PLATE, plateReferences, runPlate } from '../../src/validation/plate-cases';
 
 describe('stress concentration references', () => {
@@ -56,11 +57,10 @@ describe('wide plate (W/d = 10) against Kirsch, gross basis', { timeout: 60_000 
     }
   });
 
-  it('K_t,g sits 0–2% above Kirsch, as finite width predicts, and within 1% of Heywood (converted to gross)', () => {
-    const kt = fine.kt['spr-arc-fit'].gross.value;
-    expect(kt / KIRSCH_KT.value - 1).toBeGreaterThan(0);
-    expect(kt / KIRSCH_KT.value - 1).toBeLessThan(0.02);
-    expect(Math.abs(kt / refs.heywoodAsGross.value - 1)).toBeLessThan(0.01);
+  // K_t,g 0–2% above Kirsch (finite width) and within 1% of Heywood converted
+  // to gross: the shared criteria the validation page displays.
+  it.each(kirschChecks(fine))('$label: $measured (required $required)', (check) => {
+    expect(check.pass).toBe(true);
   });
 
   it('gets closer to the reference with refinement', () => {
@@ -69,10 +69,7 @@ describe('wide plate (W/d = 10) against Kirsch, gross basis', { timeout: 60_000 
   });
 
   it('follows the Kirsch decay along the net section', () => {
-    const a = KIRSCH_PLATE.holeDiameter / 2;
-    const near = fine.ligament.filter((p) => p.y >= 1.2 * a && p.y <= 4 * a);
-    expect(near.length).toBeGreaterThan(5);
-    for (const p of near) expect(Math.abs(p.spr / p.kirsch - 1)).toBeLessThan(0.025);
+    expect(ligamentCheck(fine, KIRSCH_PLATE.holeDiameter / 2).pass).toBe(true);
   });
 });
 
@@ -81,9 +78,8 @@ describe('finite plates against Heywood, net basis', { timeout: 60_000 }, () => 
     it(`d/W = ${dOverW}: K_t,n within 2.5% of Heywood's empirical fit`, () => {
       const params = { ...KIRSCH_PLATE, width: 50, length: 100, holeDiameter: 50 * dOverW };
       const run = runPlate(params, holeMesh(params, 32));
-      const kt = run.kt['spr-arc-fit'].net;
-      expect(kt.basis).toBe('net');
-      expect(Math.abs(kt.value / heywoodKt(dOverW).value - 1)).toBeLessThan(0.025);
+      expect(run.kt['spr-arc-fit'].net.basis).toBe('net');
+      expect(heywoodCheck(run).pass).toBe(true);
     });
   }
 });

@@ -15,6 +15,7 @@ import { EditorCanvas } from './editor/EditorCanvas';
 import { GeometryPanel } from './editor/GeometryPanel';
 import { type ModelInputs, ModelPanel } from './ModelPanel';
 import { ResultsPanel } from './ResultsPanel';
+import { SiteHeader } from './SiteHeader';
 import { useSolver } from './useSolver';
 import { type DisplaySettings, Viewport } from './Viewport';
 
@@ -101,10 +102,7 @@ export function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>Plane Stress FEA</h1>
-        <span className="app-tag">linear · plane stress · triangular elements</span>
-      </header>
+      <SiteHeader page="solver" />
 
       <ModelPanel
         inputs={inputs}

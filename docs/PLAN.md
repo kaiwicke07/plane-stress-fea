@@ -14,7 +14,7 @@ with a thickness `t` in mm.
 | 3 | Viewport (WebGL2 field + Canvas2D overlay), presets, material picker, solver in a Web Worker | Presets solve and render with deformed shape |
 | 4 | Bowyer–Watson Delaunay + DistMesh, quality metrics, plate-with-hole validation | Kt matches references (see below) |
 | 5 | Geometry editor: polygons, holes, edge picking, supports and tractions | User-drawn part solves end to end (done: outline, circle and polygon holes, stable edge IDs, undo, autosave, three templates) |
-| 6 | Validation page: FEA vs analytical plots, error tables, convergence plots | Same cases run in Vitest and on the site |
+| 6 | Validation page: FEA vs analytical plots, error tables, convergence plots | Same cases run in Vitest and on the site (done: `#/validation` runs `src/validation/suite.ts` live in a worker; pass/fail from shared `criteria.ts`) |
 | 7 | 6-node quadratic triangle (LST), CST vs LST comparison, README and polish | LST cantilever matches beam theory on a coarse mesh |
 
 ## Modelling rules
