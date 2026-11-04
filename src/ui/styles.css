@@ -1,35 +1,37 @@
 :root {
-  /* Same palette as chess.ai: warm charcoal, soft blue. Hex, because the
-     canvases read some of these through getComputedStyle. */
-  --bg: #181715;
-  --surface: #22201e;
-  --surface-raised: #2d2b29;
-  --border: #373533;
-  --text: #f0eeec;
-  --text-muted: #a7a4a1;
-  --accent: #58a2f2;
-  --accent-text: #06101c;
-  --accent-soft: rgb(88 162 242 / 0.15);
-  --accent-line: rgb(88 162 242 / 0.5);
-  --grid: #1f1e1c;
-  --grid-major: #282624;
-  --editor-fill: rgb(88 162 242 / 0.07);
+  /* Its own look: an engineering drawing. Paper ground, ink lines, one
+     orange for loads and the active control. Hex, because the canvases
+     read some of these through getComputedStyle. */
+  --bg: #f2f3f0;
+  --surface: #ffffff;
+  --surface-raised: #e9eae6;
+  --border: #d3d5cf;
+  --border-strong: #b6b9b2;
+  --text: #16181b;
+  --text-muted: #5c6066;
+  --accent: #d9480f;
+  --accent-text: #ffffff;
+  --accent-soft: rgb(217 72 15 / 0.1);
+  --accent-line: rgb(217 72 15 / 0.45);
+  --grid: #e5e7e2;
+  --grid-major: #d4d7d0;
+  --editor-fill: rgb(217 72 15 / 0.06);
 
   /* Viewport annotation colours (read by the Canvas2D overlay). */
-  --viz-outline: rgb(240 238 236 / 0.55);
-  --viz-support: #c7c3bd;
+  --viz-outline: rgb(22 24 27 / 0.65);
+  --viz-support: #3d4146;
 
   /* Status colours: reserved, always paired with an icon and a label. */
-  --status-good: #51c672;
-  --status-critical: #fc5855;
+  --status-good: #1a7f37;
+  --status-critical: #c92a2a;
 
-  --font-ui: 'Archivo Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Code', Consolas, monospace;
-  --radius: 12px;
-  --radius-control: 8px;
+  --font-ui: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --radius: 3px;
+  --radius-control: 2px;
   --gap: 12px;
 
-  color-scheme: dark;
+  color-scheme: light;
   accent-color: var(--accent);
 }
 
@@ -55,7 +57,7 @@ body {
 }
 
 ::selection {
-  background: rgb(88 162 242 / 0.35);
+  background: rgb(217 72 15 / 0.22);
 }
 
 h1,
@@ -190,8 +192,8 @@ code {
   justify-content: center;
   width: 32px;
   height: 32px;
-  color: var(--accent-text);
-  background: var(--accent);
+  color: var(--surface);
+  background: var(--text);
   border-radius: var(--radius-control);
 }
 
@@ -201,7 +203,10 @@ code {
 }
 
 .site-nav a {
-  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: 0 14px;
   color: var(--text-muted);
   font-weight: 500;
   text-decoration: none;
@@ -211,12 +216,12 @@ code {
 
 .site-nav a:hover {
   color: var(--text);
-  background: rgb(255 255 255 / 0.04);
+  background: rgb(22 24 27 / 0.05);
 }
 
 .site-nav a[aria-current='page'] {
   color: var(--text);
-  background: var(--surface-raised);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 /* Validation page */
@@ -296,17 +301,17 @@ code {
   font-family: var(--font-mono);
   font-size: 12px;
   background: var(--surface-raised);
-  border-radius: 999px;
+  border-radius: var(--radius-control);
 }
 
 .chip-done {
   color: var(--status-good);
-  background: rgb(81 198 114 / 0.12);
+  background: rgb(26 127 55 / 0.1);
 }
 
 .chip-failed {
   color: var(--status-critical);
-  background: rgb(252 88 85 / 0.12);
+  background: rgb(201 42 42 / 0.1);
 }
 
 .chip-running {
@@ -486,10 +491,10 @@ code {
   padding: 6px 8px;
   font-size: 12px;
   pointer-events: none;
-  background: rgb(45 43 41 / 0.96);
+  background: rgb(255 255 255 / 0.97);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  box-shadow: 0 6px 20px rgb(22 24 27 / 0.14);
 }
 
 .chart-tooltip-x {
@@ -569,15 +574,15 @@ input[type='number'] {
   padding: 6px 10px;
   color: var(--text);
   font: inherit;
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-control);
   transition: border-color 0.15s;
 }
 
 select:hover,
 input[type='number']:hover {
-  border-color: #4a4744;
+  border-color: var(--border-strong);
 }
 
 input[type='number'] {
@@ -633,15 +638,15 @@ button {
   color: var(--text);
   font: inherit;
   font-weight: 500;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-control);
   cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s;
 }
 
 button:hover:not(:disabled) {
-  background: #363431;
+  background: #dcded9;
 }
 
 button:active:not(:disabled) {
@@ -699,9 +704,9 @@ button:disabled {
 }
 
 .tool-grid label:has(input:checked) {
-  color: var(--text);
-  background: var(--accent-soft);
-  border-color: var(--accent-line);
+  color: var(--surface);
+  background: var(--text);
+  border-color: var(--text);
 }
 
 .tool-grid label:has(input:focus-visible) {
@@ -736,8 +741,9 @@ button:disabled {
 
 .tab.is-active {
   color: var(--text);
-  background: var(--surface-raised);
-  border-color: var(--border);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 /* Viewport toolbar */
@@ -774,11 +780,11 @@ button:disabled {
 }
 
 .segmented {
-  gap: 2px;
-  padding: 2px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  gap: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
 }
 
 .segmented label {
@@ -786,7 +792,7 @@ button:disabled {
   padding: 4px 12px;
   color: var(--text-muted);
   cursor: pointer;
-  border-radius: 999px;
+  border-radius: 0;
   transition: background-color 0.15s, color 0.15s;
 }
 
@@ -795,9 +801,8 @@ button:disabled {
 }
 
 .segmented label:has(input:checked) {
-  color: var(--text);
-  background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent-line);
+  color: var(--surface);
+  background: var(--text);
 }
 
 .segmented input {
@@ -895,10 +900,10 @@ button:disabled {
   line-height: 1.4;
   white-space: nowrap;
   pointer-events: none;
-  background: rgb(34 32 30 / 0.94);
+  background: rgb(255 255 255 / 0.95);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  box-shadow: 0 6px 20px rgb(22 24 27 / 0.14);
 }
 
 /* Geometry editor */
@@ -950,7 +955,7 @@ button:disabled {
   padding: 8px 10px;
   font-size: 12px;
   pointer-events: none;
-  background: rgb(34 32 30 / 0.9);
+  background: rgb(255 255 255 / 0.92);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
 }
@@ -1019,17 +1024,17 @@ button:disabled {
   font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
 }
 
 .tag-good {
   color: var(--status-good);
-  background: rgb(81 198 114 / 0.14);
+  background: rgb(26 127 55 / 0.12);
 }
 
 .tag-critical {
   color: var(--status-critical);
-  background: rgb(252 88 85 / 0.14);
+  background: rgb(201 42 42 / 0.12);
 }
 
 @media (max-width: 900px) {
