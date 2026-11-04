@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { SUITE_LABEL, SUITE_ORDER, type SuiteKey } from '../../validation/suite';
-import { SiteHeader } from '../SiteHeader';
 import { CantileverIntro, ClampedCantilever, ExactCantilever, MidspanProfile } from './CantileverSections';
 import { LstCantilever, LstPlate } from './LstSections';
 import { HeywoodPlates, KirschPlate, StressDefinitions } from './PlateSections';
@@ -13,12 +12,11 @@ export function ValidationPage() {
     results[key] && needs.every((k) => results[k]) ? render() : <StudyPlaceholder status={status[key]} />;
 
   return (
-    <div className="page">
+    <main className="page">
       <div className="page-inner">
-        <SiteHeader page="validation" />
 
         <section className="intro">
-          <h2>Validation</h2>
+          <h1 className="page-title">Validation</h1>
           <p>
             Every number on this page is computed <strong>live in your browser</strong>, by the same functions the test
             suite runs in CI, and checked against the same tolerances. The derivations are in <code>docs/math/</code>{' '}
@@ -99,7 +97,7 @@ export function ValidationPage() {
           )}
         </section>
       </div>
-    </div>
+    </main>
   );
 }
 

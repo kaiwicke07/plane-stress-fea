@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { App } from './App';
-import type { Page } from './SiteHeader';
+import { type Page, SiteHeader } from './SiteHeader';
 import { ValidationPage } from './validation/ValidationPage';
 
 // Hash routing (#/validation) works on any static host, GitHub Pages included,
@@ -16,5 +16,10 @@ function currentPage(): Page {
 
 export function Root() {
   const page = useSyncExternalStore(subscribe, currentPage);
-  return page === 'validation' ? <ValidationPage /> : <App />;
+  return (
+    <div className="shell">
+      <SiteHeader page={page} />
+      {page === 'validation' ? <ValidationPage /> : <App />}
+    </div>
+  );
 }

@@ -112,8 +112,8 @@ npm run lint
 npm run build      # type-check and build the static site into dist/
 ```
 
-Pushing to `main` runs lint, tests and the build in GitHub Actions and deploys
-`dist/` to GitHub Pages.
+Pushing to `main` runs lint, tests and the build in GitHub Actions. The site is
+hosted on Vercel, which builds and deploys `main` on its own.
 
 ## Limitations
 
